@@ -1521,8 +1521,10 @@ bool CUtil::SupportsWriteFileOperations(const std::string& strPath)
 
 bool CUtil::SupportsReadFileOperations(const std::string& strPath)
 {
-  if (URIUtils::IsVideoDb(strPath))
-    return false;
+  //if (URIUtils::IsVideoDb(strPath))
+  //{
+  //  return false;
+  //}
 
   return true;
 }
