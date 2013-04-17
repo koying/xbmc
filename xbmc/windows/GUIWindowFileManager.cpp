@@ -25,6 +25,7 @@
 #include "messaging/ApplicationMessenger.h"
 #include "Util.h"
 #include "filesystem/Directory.h"
+#include "filesystem/StackDirectory.h"
 #include "filesystem/ZipManager.h"
 #include "filesystem/FileDirectoryFactory.h"
 #include "dialogs/GUIDialogContextMenu.h"
@@ -53,6 +54,10 @@
 #include "messaging/helpers/DialogOKHelper.h"
 #include "utils/StringUtils.h"
 #include "utils/log.h"
+#include "video/VideoInfoTag.h"
+#include "music/tags/MusicInfoTag.h"
+#include "video/dialogs/GUIDialogVideoInfo.h"
+
 #include "utils/JobManager.h"
 #include "utils/FileOperationJob.h"
 #include "utils/FileUtils.h"
@@ -329,7 +334,7 @@ void CGUIWindowFileManager::OnSort(int iList)
   for (int i = 0; i < m_vecItems[iList]->Size(); i++)
   {
     CFileItemPtr pItem = m_vecItems[iList]->Get(i);
-    if (pItem->m_bIsFolder && (!pItem->m_dwSize || pItem->IsPath("add")))
+    if ((pItem->m_bIsFolder || pItem->IsVideoDb() || pItem->IsMusicDb()) && (!pItem->m_dwSize || pItem->IsPath("add")))
       pItem->SetLabel2("");
     else
       pItem->SetFileSizeLabel();
@@ -800,6 +805,33 @@ void CGUIWindowFileManager::OnNewFolder(int iList)
   }
 }
 
+void CGUIWindowFileManager::OnShowInfo(int iList)
+{
+  CFileItemPtr selItem;
+  for (int i = 0; i < m_vecItems[iList]->Size();++i)
+  {
+    CFileItemPtr pItem = m_vecItems[iList]->Get(i);
+    if (pItem->IsSelected())
+    { 
+      selItem = pItem;
+      break;
+    }
+  }
+
+  if (!selItem)
+    return;
+
+  if (selItem->HasVideoInfoTag())
+  {
+    CGUIDialogVideoInfo* pDlgInfo = (CGUIDialogVideoInfo*)g_windowManager.GetWindow(WINDOW_DIALOG_VIDEO_INFO);
+    if (!pDlgInfo)
+      return;
+
+    pDlgInfo->SetMovie(selItem.get());
+    pDlgInfo->Open();
+  }
+}
+
 void CGUIWindowFileManager::Refresh(int iList)
 {
   int nSel = GetSelectedItem(iList);
@@ -1034,6 +1066,8 @@ void CGUIWindowFileManager::OnPopupMenu(int list, int item, bool bContextDriven 
       choices.Add(CONTROL_BTNCOPY, 115);
     if (CanMove(list) && showEntry)
       choices.Add(CONTROL_BTNMOVE, 116);
+    if (pItem->IsVideoDb() || pItem->IsMusicDb())
+      choices.Add(14, 38021); // Info
   }
   if (CanNewFolder(list))
     choices.Add(CONTROL_BTNNEWFOLDER, 20309);
@@ -1091,9 +1125,35 @@ void CGUIWindowFileManager::OnPopupMenu(int list, int item, bool bContextDriven 
     for (int i=0; i<m_vecItems[list]->Size(); ++i)
     {
       CFileItemPtr pItem2=m_vecItems[list]->Get(i);
-      if (pItem2->m_bIsFolder && pItem2->IsSelected())
+      if (pItem2->IsSelected())
       {
-        int64_t folderSize = CalculateFolderSize(pItem2->GetPath(), progress);
+        int64_t folderSize = 0;
+        if (pItem2->m_bIsFolder)
+        {
+          folderSize = CalculateFolderSize(pItem2->GetPath(), progress);
+        } 
+        else if (pItem2->IsVideoDb() || pItem2->IsMusicDb())
+        {
+          std::string strFileNameAndPath;
+          if (pItem2->HasVideoInfoTag())
+            strFileNameAndPath = pItem2->GetVideoInfoTag()->m_strFileNameAndPath;
+          else if (pItem2->HasMusicInfoTag())
+            strFileNameAndPath = pItem2->GetMusicInfoTag()->m_strURL;
+
+          if (strFileNameAndPath.empty())
+            continue;
+
+          if (URIUtils::IsStack(strFileNameAndPath)) 
+            continue;
+
+          CFile f;
+          if (!f.Open(strFileNameAndPath))
+            continue;
+
+          folderSize += f.GetLength();
+          f.Close();
+        }
+
         if (folderSize >= 0)
         {
           pItem2->m_dwSize = folderSize;
@@ -1116,6 +1176,9 @@ void CGUIWindowFileManager::OnPopupMenu(int list, int item, bool bContextDriven 
     CancelJobs();
   if (btnid == CONTROL_BTNVIEW)
     CGUIDialogTextViewer::ShowForFile(pItem->GetPath(), true);
+
+  if (btnid == 14)
+    OnShowInfo(list);
 
   if (bDeselect && item >= 0 && item < m_vecItems[list]->Size())
   { // deselect item as we didn't do anything
