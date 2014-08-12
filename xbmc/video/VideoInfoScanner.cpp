@@ -1562,7 +1562,6 @@ namespace VIDEO
       CInfoScanner::INFO_TYPE result=CInfoScanner::NO_NFO;
       CScraperUrl scrUrl;
       ScraperPtr info(scraper);
-      item.GetVideoInfoTag()->m_iEpisode = file->iEpisode;
       std::unique_ptr<IVideoInfoTagLoader> loader;
       if (useLocal)
       {
@@ -1576,7 +1575,7 @@ namespace VIDEO
       if (result == CInfoScanner::FULL_NFO)
       {
         // override with episode and season number from file if available
-        if (file->iEpisode > -1)
+        if (item.GetVideoInfoTag()->m_iEpisode == -1 && file->iEpisode > -1)
         {
           item.GetVideoInfoTag()->m_iEpisode = file->iEpisode;
           item.GetVideoInfoTag()->m_iSeason = file->iSeason;
