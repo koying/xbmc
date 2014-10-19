@@ -48,6 +48,7 @@ public:
 
   bool HasCursor() override { return false; };
 
+  bool Minimize() override;
   bool Hide() override;
   bool Show(bool raise = true) override;
   void Register(IDispResource *resource) override;
