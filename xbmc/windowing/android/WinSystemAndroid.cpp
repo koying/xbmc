@@ -45,6 +45,8 @@
 #include <EGL/egl.h>
 #include <EGL/eglplatform.h>
 
+#include "platform/android/activity/XBMCApp.h"
+
 using namespace KODI;
 
 CWinSystemAndroid::CWinSystemAndroid()
@@ -234,6 +236,11 @@ void CWinSystemAndroid::UpdateResolutions()
     CDisplaySettings::GetInstance().GetResolutionInfo(RES_DESKTOP) = CDisplaySettings::GetInstance().GetResolutionInfo(ResDesktop);
     CDisplaySettings::GetInstance().GetResolutionInfo(ResDesktop) = desktop;
   }
+}
+
+bool CWinSystemAndroid::Minimize()
+{
+  CXBMCApp::moveTaskToBack(true);
 }
 
 bool CWinSystemAndroid::Hide()

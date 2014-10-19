@@ -47,4 +47,5 @@ private:
 
   bool m_recentlyAddedRunning;
   int m_cumulativeUpdateFlag;
+  int m_countBackCalled;
 };
