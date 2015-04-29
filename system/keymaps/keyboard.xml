@@ -73,6 +73,7 @@
       <menu mod="longpress">Menu</menu>
       <c>ContextMenu</c>
       <c mod="longpress">Menu</c>
+      <leftwindows>ContextMenu</leftwindows>
       <space>Pause</space>
       <x>Stop</x>
       <period>SkipNext</period>
@@ -346,6 +347,7 @@
       <pagedown>SkipPrevious</pagedown>
       <menu>CodecInfo</menu>
       <c>CodecInfo</c>
+      <leftwindows>CodecInfo</leftwindows>
     </keyboard>
   </FullscreenVideo>
   <VideoTimeSeek>
