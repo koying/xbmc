@@ -3100,6 +3100,10 @@ bool CApplication::PlayFile(CFileItem item, const std::string& player, bool bRes
   if (item.IsStack())
     return PlayStack(item, bRestart);
 
+  // If video, bring us to front
+  if (item.IsVideo())
+    CServiceBroker::GetWinSystem().BringToFront();
+
   CPlayerOptions options;
 
   if( item.HasProperty("StartPercent") )

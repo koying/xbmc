@@ -254,6 +254,11 @@ bool CWinSystemAndroid::Show(bool raise)
   return false;
 }
 
+bool CWinSystemAndroid::BringToFront()
+{
+  CXBMCApp::get()->BringToFront();
+}
+
 void CWinSystemAndroid::Register(IDispResource *resource)
 {
   CSingleLock lock(m_resourceSection);

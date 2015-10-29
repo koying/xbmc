@@ -169,9 +169,12 @@ public:
   static int SetBuffersGeometry(int width, int height, int format);
   static int android_printf(const char *format, ...);
   
+  void BringToFront();
+
   static int GetBatteryLevel();
   bool EnableWakeLock(bool on);
   static bool HasFocus() { return m_hasFocus; }
+  static bool IsResumed() { return m_isResumed; }
   static bool IsHeadsetPlugged();
 
   bool StartActivity(const std::string &package, const std::string &intent = std::string(), const std::string &dataType = std::string(), const std::string &dataURI = std::string());
@@ -268,6 +271,7 @@ private:
   static CJNIWakeLock *m_wakeLock;
   static int m_batteryLevel;
   static bool m_hasFocus;
+  static bool m_isResumed;
   static bool m_headsetPlugged;
   IInputDeviceCallbacks* m_inputDeviceCallbacks;
   IInputDeviceEventHandler* m_inputDeviceEventHandler;
