@@ -128,6 +128,7 @@ CJNIWakeLock *CXBMCApp::m_wakeLock = NULL;
 ANativeWindow* CXBMCApp::m_window = NULL;
 int CXBMCApp::m_batteryLevel = 0;
 bool CXBMCApp::m_hasFocus = false;
+bool CXBMCApp::m_isResumed = false;
 bool CXBMCApp::m_headsetPlugged = false;
 bool CXBMCApp::m_hdmiPlugged = true;
 bool CXBMCApp::m_hasReqVisible = false;
@@ -262,6 +263,8 @@ void CXBMCApp::onResume()
   // Re-request Visible Behind
   if ((m_playback_state & PLAYBACK_STATE_PLAYING) && (m_playback_state & PLAYBACK_STATE_VIDEO))
     RequestVisibleBehind(true);
+
+  m_isResumed = true;
 }
 
 void CXBMCApp::onPause()
@@ -273,6 +276,7 @@ void CXBMCApp::onPause()
 
   EnableWakeLock(false);
   m_hasReqVisible = false;
+  m_isResumed = false;
 }
 
 void CXBMCApp::onStop()
@@ -590,6 +594,15 @@ int CXBMCApp::android_printf(const char *format, ...)
   int result = __android_log_vprint(ANDROID_LOG_VERBOSE, "Kodi", format, args);
   va_end(args);
   return result;
+}
+
+void CXBMCApp::BringToFront()
+{
+  if (!m_isResumed)
+  {
+    CLog::Log(LOGERROR, "CXBMCApp::BringToFront");
+    StartActivity(getPackageName());
+  }
 }
 
 int CXBMCApp::GetDPI()
