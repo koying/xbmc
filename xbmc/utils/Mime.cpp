@@ -337,7 +337,8 @@ std::map<std::string, std::string> fillMimeTypes()
   mimeTypes.insert(std::pair<std::string, std::string>("rexx",      "text/x-script.rexx"));
   mimeTypes.insert(std::pair<std::string, std::string>("rf",        "image/vnd.rn-realflash"));
   mimeTypes.insert(std::pair<std::string, std::string>("rgb",       "image/x-rgb"));
-  mimeTypes.insert(std::pair<std::string, std::string>("rm",        "audio/x-pn-realaudio"));
+  //mimeTypes.insert(std::pair<std::string, std::string>("rm",        "audio/x-pn-realaudio"));
+  mimeTypes.insert(std::pair<std::string, std::string>("rm",        "application/octet-stream"));
   mimeTypes.insert(std::pair<std::string, std::string>("rmi",       "audio/mid"));
   mimeTypes.insert(std::pair<std::string, std::string>("rmm",       "audio/x-pn-realaudio"));
   mimeTypes.insert(std::pair<std::string, std::string>("rmp",       "audio/x-pn-realaudio"));

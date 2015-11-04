@@ -1535,7 +1535,7 @@ bool CAMLCodec::OpenDecoder(CDVDStreamInfo &hints)
       am_private->video_format = VFORMAT_H264MVC;
       m_hints.stereo_mode = "top_bottom";
     }
-    else if (hints.width > 1920 || hints.height > 1088)
+    else if ((hints.width * hints.height) > (1920 * 1088))
       am_private->video_format = VFORMAT_H264_4K2K;
   }
   switch (am_private->video_format)
