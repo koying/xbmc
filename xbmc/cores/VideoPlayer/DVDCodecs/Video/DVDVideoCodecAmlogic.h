@@ -48,7 +48,6 @@ public:
 
 protected:
   long m_refs;
-  CCriticalSection    m_section;
 
   CDVDVideoCodecAmlogic* m_codec;
   CAMLCodec* m_amlCodec;
@@ -80,6 +79,8 @@ protected:
   void            FrameQueuePush(double dts, double pts);
   void            FrameRateTracking(uint8_t *pData, int iSize, double dts, double pts);
   void            RemoveInfo(CDVDAmlogicInfo* info);
+
+  static CCriticalSection m_section;
 
   IVPClockCallback* m_clock;
   CAMLCodec      *m_Codec;
