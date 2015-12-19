@@ -38,8 +38,6 @@ typedef struct frame_queue {
   struct frame_queue *nextframe;
 } frame_queue;
 
-CCriticalSection CDVDVideoCodecAmlogic::m_section;
-
 CDVDVideoCodecAmlogic::CDVDVideoCodecAmlogic(IVPClockCallback* clock) :
   m_clock(clock),
   m_Codec(NULL),
@@ -283,13 +281,9 @@ bool CDVDVideoCodecAmlogic::GetPicture(DVDVideoPicture* pDvdVideoPicture)
     m_Codec->GetPicture(&m_videobuffer);
   *pDvdVideoPicture = m_videobuffer;
 
-  {
-    CSingleLock lock(CDVDVideoCodecAmlogic::m_section);
-
-    CDVDAmlogicInfo* info = new CDVDAmlogicInfo(this, m_Codec);
-    m_inflight.insert(info);
-    pDvdVideoPicture->amlcodec = info->Retain();
-  }
+  CDVDAmlogicInfo* info = new CDVDAmlogicInfo(this, m_Codec);
+  m_inflight.insert(info);
+  pDvdVideoPicture->amlcodec = info->Retain();
 
   // check for mpeg2 aspect ratio changes
   if (m_mpeg2_sequence && pDvdVideoPicture->pts >= m_mpeg2_sequence_pts)
@@ -590,14 +584,14 @@ long CDVDAmlogicInfo::Release()
 
 CAMLCodec *CDVDAmlogicInfo::getAmlCodec() const
 {
-  CSingleLock lock(CDVDVideoCodecAmlogic::m_section);
+  CSingleLock lock(m_section);
 
   return m_amlCodec;
 }
 
 void CDVDAmlogicInfo::invalidate()
 {
-  CSingleLock lock(CDVDVideoCodecAmlogic::m_section);
+  CSingleLock lock(m_section);
 
   m_codec = NULL;
   m_amlCodec = NULL;
