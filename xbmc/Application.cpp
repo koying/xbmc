@@ -3590,16 +3590,17 @@ bool CApplication::WakeUpScreenSaverAndDPMS(bool bPowerOffKeyPressed /* = false 
   else if (m_screensaverActive)
     result = WakeUpScreenSaver(bPowerOffKeyPressed);
 
+#ifdef TARGET_ANDROID
+  // Screensaver deactivated -> acquire wake lock
+  CXBMCApp::EnableWakeLock(true);
+#endif
+
   if(result)
   {
     // allow listeners to ignore the deactivation if it precedes a powerdown/suspend etc
     CVariant data(CVariant::VariantTypeObject);
     data["shuttingdown"] = bPowerOffKeyPressed;
     CAnnouncementManager::GetInstance().Announce(GUI, "xbmc", "OnScreensaverDeactivated", data);
-#ifdef TARGET_ANDROID
-    // Screensaver deactivated -> acquire wake lock
-    CXBMCApp::EnableWakeLock(true);
-#endif
   }
 
   return result;
@@ -3617,7 +3618,7 @@ bool CApplication::WakeUpScreenSaver(bool bPowerOffKeyPressed /* = false */)
       if (m_ServiceManager->GetProfileManager().GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE &&
           (m_ServiceManager->GetProfileManager().UsingLoginScreen() || m_ServiceManager->GetSettings().GetBool(CSettings::SETTING_MASTERLOCK_STARTUPLOCK)) &&
           m_ServiceManager->GetProfileManager().GetCurrentProfile().getLockMode() != LOCK_MODE_EVERYONE &&
-          m_screensaverIdInUse != "screensaver.xbmc.builtin.dim" && m_screensaverIdInUse != "screensaver.xbmc.builtin.black" && m_screensaverIdInUse != "visualization")
+          m_screensaverIdInUse != "screensaver.xbmc.builtin.dim" && m_screensaverIdInUse != "screensaver.xbmc.builtin.black" && m_screensaverIdInUse != "screensaver.xbmc.builtin.system" && m_screensaverIdInUse != "visualization")
       {
         m_iScreenSaveLock = 2;
         CGUIMessage msg(GUI_MSG_CHECK_LOCK,0,0);
@@ -3637,7 +3638,7 @@ bool CApplication::WakeUpScreenSaver(bool bPowerOffKeyPressed /* = false */)
     m_iScreenSaveLock = 0;
     ResetScreenSaverTimer();
 
-    if (m_screensaverIdInUse == "visualization")
+    if (m_screensaverIdInUse == "visualization" || m_screensaverIdInUse == "screensaver.xbmc.builtin.system")
     {
       // we can just continue as usual from vis mode
       return false;
@@ -3782,12 +3783,13 @@ void CApplication::ActivateScreenSaver(bool forceType /*= false */)
   else // Get Screensaver Mode
     m_screensaverIdInUse = m_ServiceManager->GetSettings().GetString(CSettings::SETTING_SCREENSAVER_MODE);
 
-  if (m_screensaverIdInUse == "screensaver.xbmc.builtin.dim" ||
-      m_screensaverIdInUse == "screensaver.xbmc.builtin.black")
+  if (m_screensaverIdInUse == "screensaver.xbmc.builtin.dim"
+      || m_screensaverIdInUse == "screensaver.xbmc.builtin.black"
+      || m_screensaverIdInUse == "screensaver.xbmc.builtin.system")
   {
 #ifdef TARGET_ANDROID
-    // Default screensaver activated -> release wake lock
-    CXBMCApp::EnableWakeLock(false);
+    if (m_screenSaver->ID() == "screensaver.xbmc.builtin.system")
+      CXBMCApp::EnableWakeLock(false);
 #endif
     return;
   }
