@@ -622,7 +622,19 @@ namespace VIDEO
     if (pURL && !pURL->m_url.empty())
       url = *pURL;
     else if ((retVal = FindVideo(pItem->GetMovieName(bDirNames), info2, url, pDlgProgress)) <= 0)
-      return retVal < 0 ? INFO_CANCELLED : INFO_NOT_FOUND;
+    {
+      if (retVal < 0) 
+        return INFO_CANCELLED;
+      else if (retVal == 0 && CSettings::GetInstance().GetBool(CSettings::SETTING_VIDEOLIBRARY_IMPORTALL))
+      {
+        pItem->GetVideoInfoTag()->m_strTitle = CURL::Decode(CURL(pItem->GetPath()).GetFileNameWithoutPath());
+        if (AddVideo(pItem, CONTENT_MOVIES, bDirNames, useLocal) < 0)
+          return INFO_ERROR;
+        return INFO_ADDED;
+      }
+      else
+        return INFO_NOT_FOUND;
+    }
 
     CLog::Log(LOGDEBUG,
               "VideoInfoScanner: Fetching url '%s' using %s scraper (content: '%s')",
@@ -1662,8 +1674,7 @@ namespace VIDEO
         {
           CFileItem item;
           item.SetPath(file->strPath);
-          item.GetVideoInfoTag()->m_strTitle = CURL(file->strPath).GetFileNameWithoutPath();
-          CURL::Decode(item.GetVideoInfoTag()->m_strTitle);
+          item.GetVideoInfoTag()->m_strTitle = CURL::Decode(CURL(file->strPath).GetFileNameWithoutPath());
           item.GetVideoInfoTag()->m_strSortTitle = item.GetVideoInfoTag()->m_strTitle;
           item.GetVideoInfoTag()->m_iSeason = file->iSeason;
           item.GetVideoInfoTag()->m_iEpisode = file->iEpisode;
