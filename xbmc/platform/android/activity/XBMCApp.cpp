@@ -98,6 +98,7 @@
 #include "platform/xbmc.h"
 
 #define GIGABYTES       1073741824
+#define CAPTURE_QUEUE_MAXDEPTH 3
 
 #define ACTION_XBMC_RESUME "android.intent.XBMC_RESUME"
 
@@ -133,6 +134,11 @@ bool CXBMCApp::m_hasReqVisible = false;
 CCriticalSection CXBMCApp::m_applicationsMutex;
 std::vector<androidPackage> CXBMCApp::m_applications;
 CVideoSyncAndroid* CXBMCApp::m_syncImpl = NULL;
+
+CCriticalSection CXBMCApp::m_captureMutex;
+CCaptureEvent CXBMCApp::m_captureEvent;
+std::queue<CJNIImage> CXBMCApp::m_captureQueue;
+
 CEvent CXBMCApp::m_vsyncEvent;
 std::vector<CActivityResultEvent*> CXBMCApp::m_activityResultEvents;
 
@@ -1112,6 +1118,55 @@ void CXBMCApp::onVisibleBehindCanceled()
   }
 }
 
+bool CXBMCApp::GetCapture(CJNIImage& img)
+{
+  CSingleLock lock(m_captureMutex);
+  if (m_captureQueue.empty())
+    return false;
+
+  img = m_captureQueue.front();
+  m_captureQueue.pop();
+  return true;
+}
+
+void CXBMCApp::TakeScreenshot()
+{
+  takeScreenshot();
+}
+
+void CXBMCApp::StopCapture()
+{
+  CSingleLock lock(m_captureMutex);
+  while (!m_captureQueue.empty())
+  {
+    CJNIImage img = m_captureQueue.front();
+    img.close();
+    m_captureQueue.pop();
+  }
+  CJNIMainActivity::stopCapture();
+}
+
+void CXBMCApp::onCaptureAvailable(CJNIImage image)
+{
+  CSingleLock lock(m_captureMutex);
+
+  m_captureQueue.push(image);
+  if (m_captureQueue.size() > CAPTURE_QUEUE_MAXDEPTH)
+  {
+    CJNIImage img = m_captureQueue.front();
+    img.close();
+    m_captureQueue.pop();
+  }
+}
+
+void CXBMCApp::onScreenshotAvailable(CJNIImage image)
+{
+  CSingleLock lock(m_captureMutex);
+
+  m_captureEvent.SetImage(image);
+  m_captureEvent.Set();
+}
+
 int CXBMCApp::WaitForActivityResult(const CJNIIntent &intent, int requestCode, CJNIIntent &result)
 {
   int ret = 0;
@@ -1124,6 +1179,18 @@ int CXBMCApp::WaitForActivityResult(const CJNIIntent &intent, int requestCode, C
     ret = event->GetResultCode();
   }
   delete event;
+  return ret;
+}
+
+bool CXBMCApp::WaitForCapture(CJNIImage& image)
+{
+  bool ret = false;
+  if (m_captureEvent.WaitMSec(2000))
+  {
+    image = m_captureEvent.GetImage();
+    ret = true;
+  }
+  m_captureEvent.Reset();
   return ret;
 }
 
