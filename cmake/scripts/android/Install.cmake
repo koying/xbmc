@@ -67,6 +67,7 @@ set(package_files strings.xml
                   src/XBMCRecommendationBuilder.java
                   src/XBMCSearchableActivity.java
                   src/XBMCSettingsContentObserver.java
+                  src/XBMCProjection.java
                   src/XBMCProperties.java
                   src/XBMCVideoView.java
                   src/XBMCFile.java
