@@ -25,6 +25,7 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <queue>
 
 #include <android/native_activity.h>
 
@@ -32,6 +33,7 @@
 #include <androidjni/AudioManager.h>
 #include <androidjni/BroadcastReceiver.h>
 #include <androidjni/SurfaceHolder.h>
+#include <androidjni/Image.h>
 #include <androidjni/View.h>
 
 #include "threads/Event.h"
@@ -87,6 +89,17 @@ protected:
   int m_resultcode;
 };
 
+class CCaptureEvent : public CEvent
+{
+public:
+  CCaptureEvent() {}
+  jni::CJNIImage GetImage() const { return m_image; }
+  void SetImage(const jni::CJNIImage &image) { m_image = image; }
+
+protected:
+  jni::CJNIImage m_image;
+};
+
 class CXBMCApp
     : public IActivityHandler
     , public CJNIMainActivity
@@ -109,6 +122,8 @@ public:
   virtual void onAudioFocusChange(int focusChange);
   virtual void doFrame(int64_t frameTimeNanos) override;
   virtual void onVisibleBehindCanceled() override;
+  virtual void onCaptureAvailable(jni::CJNIImage image) override;
+  virtual void onScreenshotAvailable(jni::CJNIImage image) override;
   
   // implementation of CJNIInputManagerInputDeviceListener
   void onInputDeviceAdded(int deviceId) override;
@@ -168,6 +183,10 @@ public:
 
   static CRect MapRenderToDroid(const CRect& srcRect);
   static int WaitForActivityResult(const CJNIIntent &intent, int requestCode, CJNIIntent& result);
+  static bool WaitForCapture(jni::CJNIImage& image);
+  static bool GetCapture(jni::CJNIImage& img);
+  static void TakeScreenshot();
+  static void StopCapture();
 
   // Playback callbacks
   void OnPlayBackStarted();
@@ -236,6 +255,10 @@ private:
   static CCriticalSection m_applicationsMutex;
   static std::vector<androidPackage> m_applications;
   static std::vector<CActivityResultEvent*> m_activityResultEvents;
+
+  static CCriticalSection m_captureMutex;
+  static CCaptureEvent m_captureEvent;
+  static std::queue<jni::CJNIImage> m_captureQueue;
 
   static ANativeWindow* m_window;
 
