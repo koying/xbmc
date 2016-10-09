@@ -83,6 +83,11 @@ extern "C" int XBMC_Run(bool renderGUI, const CAppParamParser &params)
   }
 #endif
 
+#if defined(TARGET_ANDROID)
+  if (g_advancedSettings.m_videoUseDroidProjectionCapture)
+    CXBMCApp::startProjection();
+#endif
+
   try
   {
     status = g_application.Run(params);

@@ -112,7 +112,31 @@ class CRenderCaptureBase
     bool m_asyncChecked;
 };
 
-#if defined(TARGET_RASPBERRY_PI)
+#if defined(TARGET_ANDROID)
+#include "system_gl.h"
+
+class CRenderCaptureDroid : public CRenderCaptureBase
+{
+public:
+  CRenderCaptureDroid();
+  ~CRenderCaptureDroid();
+
+  int   GetCaptureFormat();
+
+  void  BeginRender();
+  void  EndRender();
+  void  ReadOut();
+
+  void* GetRenderBuffer();
+};
+
+class CRenderCapture : public CRenderCaptureDroid
+{
+public:
+  CRenderCapture() {}
+};
+
+#elif defined(TARGET_RASPBERRY_PI)
 #include "platform/linux/RBP.h"
 
 class CRenderCaptureDispmanX : public CRenderCaptureBase

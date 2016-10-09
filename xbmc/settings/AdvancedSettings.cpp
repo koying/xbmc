@@ -152,6 +152,7 @@ void CAdvancedSettings::Initialize()
   m_videoCaptureUseOcclusionQuery = -1; //-1 is auto detect
   m_videoVDPAUtelecine = false;
   m_videoVDPAUdeintSkipChromaHD = false;
+  m_videoUseDroidProjectionCapture = false;
   m_useFfmpegVda = true;
   m_DXVACheckCompatibility = false;
   m_DXVACheckCompatibilityPresent = false;
@@ -566,6 +567,8 @@ void CAdvancedSettings::ParseSettingsFile(const std::string &file)
     XMLUtils::GetInt(pElement, "percentseekbackward", m_videoPercentSeekBackward, -100, 0);
     XMLUtils::GetInt(pElement, "percentseekforwardbig", m_videoPercentSeekForwardBig, 0, 100);
     XMLUtils::GetInt(pElement, "percentseekbackwardbig", m_videoPercentSeekBackwardBig, -100, 0);
+
+    XMLUtils::GetBoolean(pElement, "usedroidprojectioncapture", m_videoUseDroidProjectionCapture);
 
     TiXmlElement* pVideoExcludes = pElement->FirstChildElement("excludefromlisting");
     if (pVideoExcludes)

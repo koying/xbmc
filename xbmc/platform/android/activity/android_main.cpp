@@ -176,6 +176,20 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved)
     env->RegisterNatives(cMain, methods, sizeof(methods)/sizeof(methods[0]));
   }
 
+  JNINativeMethod mOnCaptureAvailable = {
+    "_onCaptureAvailable",
+    "(Landroid/media/Image;)V",
+    (void*)&CJNIMainActivity::_onCaptureAvailable
+  };
+  env->RegisterNatives(cMain, &mOnCaptureAvailable, 1);
+
+  JNINativeMethod mOnScreenshotAvailable = {
+    "_onScreenshotAvailable",
+    "(Landroid/media/Image;)V",
+    (void*)&CJNIMainActivity::_onScreenshotAvailable
+  };
+  env->RegisterNatives(cMain, &mOnScreenshotAvailable, 1);
+
   jclass cBroadcastReceiver = env->FindClass(bcReceiver.c_str());
   if(cBroadcastReceiver)
   {
