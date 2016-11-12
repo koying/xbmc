@@ -3532,7 +3532,7 @@ bool CVideoPlayer::OpenStream(CCurrentStream& current, int64_t demuxerId, int iS
     stream = m_pSubtitleDemuxer->GetStream(demuxerId, iStream);
     if(!stream || stream->disabled)
       return false;
-    
+
     m_pSubtitleDemuxer->EnableStream(demuxerId, iStream, true);
 
     hint.Assign(*stream, true);
@@ -4387,12 +4387,12 @@ bool CVideoPlayer::OnAction(const CAction &action)
       case ACTION_NEXT_ITEM:
       case ACTION_CHANNEL_UP:
       {
-        if (m_Edl.HasCut()) 
+        if (m_Edl.HasCut())
         {
           // If the clip has an EDL, we'll search through that instead of sending a CHANNEL message
           const int64_t clock = m_omxplayer_mode ? GetTime() : DVD_TIME_TO_MSEC(std::min(m_CurrentAudio.dts, m_CurrentVideo.dts) + m_offset_pts);
           CEdl::Cut cut;
-          if (m_Edl.GetNearestCut(true, clock, &cut)) 
+          if (m_Edl.GetNearestCut(true, clock, &cut))
           {
             CDVDMsgPlayerSeek::CMode mode;
             mode.time = cut.end + 1;
@@ -4418,7 +4418,7 @@ bool CVideoPlayer::OnAction(const CAction &action)
           // If the clip has an EDL, we'll search through that instead of sending a CHANNEL message
           const int64_t clock = m_omxplayer_mode ? GetTime() : DVD_TIME_TO_MSEC(std::min(m_CurrentAudio.dts, m_CurrentVideo.dts) + m_offset_pts);
           CEdl::Cut cut;
-          if (m_Edl.GetNearestCut(false, clock, &cut)) 
+          if (m_Edl.GetNearestCut(false, clock, &cut))
           {
             CDVDMsgPlayerSeek::CMode mode;
             mode.time = cut.start - 1;
@@ -5048,8 +5048,10 @@ void CVideoPlayer::VideoParamsChange()
   m_messenger.Put(new CDVDMsg(CDVDMsg::PLAYER_AVCHANGE));
 }
 
-void CVideoPlayer::GetDebugInfo(std::string &audio, std::string &video, std::string &general)
+void CVideoPlayer::GetDebugInfo(std::string &acodec, std::string &audio, std::string &vcodec, std::string &video, std::string &general)
 {
+  acodec = m_VideoPlayerAudio->GetCodecInfo();
+  vcodec = m_VideoPlayerVideo->GetCodecInfo();
   audio = m_VideoPlayerAudio->GetPlayerInfo();
   video = m_VideoPlayerVideo->GetPlayerInfo();
   GetGeneralInfo(general);

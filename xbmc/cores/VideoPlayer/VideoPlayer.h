@@ -407,7 +407,7 @@ protected:
   void OnExit() override;
   void Process() override;
   void VideoParamsChange() override;
-  void GetDebugInfo(std::string &audio, std::string &video, std::string &general) override;
+  void GetDebugInfo(std::string &acodec, std::string &audio, std::string &vcodec, std::string &video, std::string &general) override;
   void UpdateClockSync(bool enabled) override;
   void UpdateRenderInfo(CRenderInfo &info) override;
   void UpdateRenderBuffers(int queued, int discard, int free) override;

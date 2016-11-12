@@ -963,6 +963,21 @@ CVideoPlayerVideo::EOutputState CVideoPlayerVideo::OutputPicture(const VideoPict
   return OUTPUT_NORMAL;
 }
 
+std::string CVideoPlayerVideo::GetCodecInfo()
+{
+  std::ostringstream s;
+  int w, h;
+  m_processInfo.GetVideoDimensions(w, h);
+
+  s << "vc:"   << m_processInfo.GetVideoDecoderName();
+  s << ", pf:"   << m_processInfo.GetVideoPixelFormat();
+  s << ", sz:" << w << "x" << h;
+  s << ", ar:"     << std::fixed << std::setprecision(2) << m_processInfo.GetVideoDAR();
+  s << ", di:"   << m_processInfo.GetVideoDeintMethod();
+
+  return s.str();
+}
+
 std::string CVideoPlayerVideo::GetPlayerInfo()
 {
   std::ostringstream s;

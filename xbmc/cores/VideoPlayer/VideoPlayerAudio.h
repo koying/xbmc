@@ -59,6 +59,7 @@ public:
   void SetDynamicRangeCompression(long drc) override { m_audioSink.SetDynamicRangeCompression(drc); }
   float GetDynamicRangeAmplification() const override { return 0.0f; }
 
+  std::string GetCodecInfo();
   std::string GetPlayerInfo() override;
   int GetAudioChannels() override;
 
@@ -117,6 +118,7 @@ protected:
     {}
 
     std::string      info;
+    std::string      codecinfo;
     double           pts;
     bool             passthrough;
   };

@@ -108,6 +108,7 @@ public:
   virtual bool IsRewindStalled() const { return false; }
   virtual double GetCurrentPts() = 0;
   virtual double GetOutputDelay() = 0;
+  virtual std::string GetCodecInfo() = 0;
   virtual std::string GetPlayerInfo() = 0;
   virtual int GetVideoBitrate() = 0;
   virtual void SetSpeed(int iSpeed) = 0;
@@ -132,6 +133,7 @@ public:
   virtual void SetVolume(float fVolume) {};
   virtual void SetMute(bool bOnOff) {};
   virtual void SetDynamicRangeCompression(long drc) = 0;
+  virtual std::string GetCodecInfo() = 0;
   virtual std::string GetPlayerInfo() = 0;
   virtual int GetAudioChannels() = 0;
   virtual double GetCurrentPts() = 0;
