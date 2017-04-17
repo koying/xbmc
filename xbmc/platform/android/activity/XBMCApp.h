@@ -177,6 +177,7 @@ public:
   static bool HasFocus() { return m_hasFocus; }
   static bool IsResumed() { return m_isResumed; }
   static bool IsHeadsetPlugged();
+  static bool IsHDMIPlugged();
 
   bool StartActivity(const std::string &package, const std::string &intent = std::string(), const std::string &dataType = std::string(), const std::string &dataURI = std::string());
   std::vector <androidPackage> GetApplications();
@@ -271,6 +272,7 @@ private:
   static bool m_hasFocus;
   static bool m_isResumed;
   static bool m_headsetPlugged;
+  static bool m_hdmiPlugged;
   IInputDeviceCallbacks* m_inputDeviceCallbacks;
   IInputDeviceEventHandler* m_inputDeviceEventHandler;
   static bool m_hasReqVisible;
