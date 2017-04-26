@@ -127,6 +127,9 @@ public:
   virtual void onCaptureAvailable(jni::CJNIImage image) override;
   virtual void onScreenshotAvailable(jni::CJNIImage image) override;
   
+  virtual void onMultiWindowModeChanged(bool isInMultiWindowMode) override;
+  virtual void onPictureInPictureModeChanged(bool isInPictureInPictureMode) override;
+
   // implementation of CJNIInputManagerInputDeviceListener
   void onInputDeviceAdded(int deviceId) override;
   void onInputDeviceChanged(int deviceId) override;
@@ -214,6 +217,9 @@ public:
   // Application slow ping
   void ProcessSlow();
 
+  //PIP
+  static void RequestPictureInPictureMode();
+
   static bool WaitVSync(unsigned int milliSeconds);
 
   bool getVideosurfaceInUse();
@@ -248,6 +254,7 @@ private:
   static IInputDeviceCallbacks* m_inputDeviceCallbacks;
   static IInputDeviceEventHandler* m_inputDeviceEventHandler;
   static bool m_hasReqVisible;
+  static bool m_hasPIP;
   bool m_videosurfaceInUse;
   bool m_firstrun;
   bool m_exiting;

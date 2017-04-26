@@ -130,6 +130,7 @@ bool CXBMCApp::m_headsetPlugged = false;
 IInputDeviceCallbacks* CXBMCApp::m_inputDeviceCallbacks = nullptr;
 IInputDeviceEventHandler* CXBMCApp::m_inputDeviceEventHandler = nullptr;
 bool CXBMCApp::m_hasReqVisible = false;
+bool CXBMCApp::m_hasPIP = false;
 CCriticalSection CXBMCApp::m_applicationsMutex;
 std::vector<androidPackage> CXBMCApp::m_applications;
 CVideoSyncAndroid* CXBMCApp::m_syncImpl = NULL;
@@ -254,15 +255,6 @@ void CXBMCApp::onResume()
 void CXBMCApp::onPause()
 {
   android_printf("%s: ", __PRETTY_FUNCTION__);
-
-  if (g_application.GetAppPlayer().IsPlaying())
-  {
-    if (g_application.GetAppPlayer().HasVideo())
-    {
-      if (!g_application.GetAppPlayer().IsPaused() && !m_hasReqVisible)
-        CApplicationMessenger::GetInstance().SendMsg(TMSG_GUI_ACTION, WINDOW_INVALID, -1, static_cast<void*>(new CAction(ACTION_PAUSE)));
-    }
-  }
 
   EnableWakeLock(false);
   m_hasReqVisible = false;
@@ -432,6 +424,16 @@ void CXBMCApp::RequestVisibleBehind(bool requested)
 
   m_hasReqVisible = requestVisibleBehind(requested);
   CLog::Log(LOGDEBUG, "Visible Behind request: %s", m_hasReqVisible ? "true" : "false");
+}
+
+void CXBMCApp::RequestPictureInPictureMode()
+{
+  // PIP and VisbleBehind are exclusive
+  if (m_hasReqVisible)
+    RequestVisibleBehind(false);
+
+  enterPictureInPictureMode();
+  CLog::Log(LOGDEBUG, "Entering PIP mode");
 }
 
 bool CXBMCApp::IsHeadsetPlugged()
@@ -609,7 +611,7 @@ void CXBMCApp::UpdateSessionMetadata()
 //      .putString(CJNIMediaMetadata::METADATA_KEY_DISPLAY_ICON_URI, thumb)
 //      .putString(CJNIMediaMetadata::METADATA_KEY_ALBUM_ART_URI, thumb)
       ;
-  
+
   std::string thumb;
   if (m_playback_state & PLAYBACK_STATE_VIDEO)
   {
@@ -1145,6 +1147,17 @@ void CXBMCApp::onScreenshotAvailable(CJNIImage image)
 
   m_captureEvent.SetImage(image);
   m_captureEvent.Set();
+}
+
+void CXBMCApp::onMultiWindowModeChanged(bool isInMultiWindowMode)
+{
+  android_printf("%s: %s", __PRETTY_FUNCTION__, isInMultiWindowMode ? "true" : "false");
+}
+
+void CXBMCApp::onPictureInPictureModeChanged(bool isInPictureInPictureMode)
+{
+  android_printf("%s: %s", __PRETTY_FUNCTION__, isInPictureInPictureMode ? "true" : "false");
+  m_hasPIP = isInPictureInPictureMode;
 }
 
 int CXBMCApp::WaitForActivityResult(const CJNIIntent &intent, int requestCode, CJNIIntent &result)
