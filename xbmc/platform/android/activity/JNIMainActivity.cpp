@@ -86,6 +86,22 @@ void CJNIMainActivity::_onScreenshotAvailable(JNIEnv* env, jobject context, jobj
     m_appInstance->onScreenshotAvailable(CJNIImage(jhobject(image)));
 }
 
+void CJNIMainActivity::_onMultiWindowModeChanged(JNIEnv* env, jobject context, jboolean isInMultiWindowMode)
+{
+  (void)env;
+  (void)context;
+  if (m_appInstance)
+    m_appInstance->onMultiWindowModeChanged(isInMultiWindowMode);
+}
+
+void CJNIMainActivity::_onPictureInPictureModeChanged(JNIEnv* env, jobject context, jboolean isInPictureInPictureMode)
+{
+  (void)env;
+  (void)context;
+  if (m_appInstance)
+    m_appInstance->onPictureInPictureModeChanged(isInPictureInPictureMode);
+}
+
 void CJNIMainActivity::runNativeOnUiThread(void (*callback)(CVariant *), CVariant* variant)
 {
   call_method<void>(m_context,
