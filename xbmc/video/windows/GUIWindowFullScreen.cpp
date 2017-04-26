@@ -53,6 +53,8 @@
 #include <algorithm>
 #if defined(TARGET_DARWIN)
 #include "platform/linux/LinuxResourceCounter.h"
+#elif defined(TARGET_ANDROID)
+#include "platform/android/activity/XBMCApp.h"
 #endif
 
 using namespace KODI::MESSAGING;
