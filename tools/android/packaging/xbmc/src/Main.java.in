@@ -97,8 +97,8 @@ public class Main extends NativeActivity implements Choreographer.FrameCallback
 
     try
     {
-      ret.right = mDecorView.getRootView().getWidth();
-      ret.bottom = mDecorView.getRootView().getHeight();
+      ret.right = mVideoLayout.getWidth();
+      ret.bottom = mVideoLayout.getHeight();
     }
     catch (Exception e)
     {
@@ -236,6 +236,7 @@ private void hideSystemUI()
       }
     });
     setContentView(R.layout.activity_main);
+    mVideoLayout = findViewById(R.id.VideoLayout);
   }
 
   @Override
