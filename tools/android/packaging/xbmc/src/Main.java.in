@@ -274,12 +274,14 @@ private void hideSystemUI()
         {
           try
           {
-            _onNewIntent(mNewIntent);
+            if (mNewIntent != null)  // Still valid?
+              _onNewIntent(mNewIntent);
           }
           catch (UnsatisfiedLinkError e)
           {
             Log.e("Main", "Native not registered");
-          } finally
+          } 
+          finally
           {
             mNewIntent = null;
           }
