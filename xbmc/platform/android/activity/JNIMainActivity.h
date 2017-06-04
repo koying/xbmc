@@ -50,8 +50,6 @@ public:
   static void registerMediaButtonEventReceiver();
   static void unregisterMediaButtonEventReceiver();
 
-  CJNIRect getDisplayRect();
-  
   static void takeScreenshot();
   static void startProjection();
   static void startCapture(int width, int height);
