@@ -129,9 +129,14 @@ public:
   virtual void onPictureInPictureModeChanged(bool isInPictureInPictureMode) override;
 
   // implementation of CJNIInputManagerInputDeviceListener
-  void onInputDeviceAdded(int deviceId) override;
-  void onInputDeviceChanged(int deviceId) override;
-  void onInputDeviceRemoved(int deviceId) override;
+  virtual void onInputDeviceAdded(int deviceId) override;
+  virtual void onInputDeviceChanged(int deviceId) override;
+  virtual void onInputDeviceRemoved(int deviceId) override;
+
+  // CJNISurfaceHolderCallback interface
+  virtual void surfaceChanged(CJNISurfaceHolder holder, int format, int width, int height) override;
+  virtual void surfaceCreated(CJNISurfaceHolder holder) override;
+  virtual void surfaceDestroyed(CJNISurfaceHolder holder) override;
 
   bool isValid() { return m_activity != NULL; }
 
@@ -184,7 +189,10 @@ public:
   static void SetDisplayMode(int mode);
   static int GetDPI();
 
+  static CRect GetSurfaceRect();
   static CRect MapRenderToDroid(const CRect& srcRect);
+  static CPoint MapDroidToGui(const CPoint& src);
+
   static int WaitForActivityResult(const CJNIIntent &intent, int requestCode, CJNIIntent& result);
   static bool WaitForCapture(jni::CJNIImage& image);
   static bool GetCapture(jni::CJNIImage& img);
@@ -224,6 +232,8 @@ public:
   bool getVideosurfaceInUse();
   void setVideosurfaceInUse(bool videosurfaceInUse);
 
+  void onLayoutChange(int left, int top, int width, int height);
+
 protected:
   // limit who can access Volume
   friend class CAESinkAUDIOTRACK;
@@ -235,6 +245,8 @@ protected:
 
 private:
   static CXBMCApp* m_xbmcappinstance;
+  static CCriticalSection m_AppMutex;
+
   CJNIXBMCAudioManagerOnAudioFocusChangeListener m_audioFocusListener;
   static std::unique_ptr<CJNIXBMCMainView> m_mainView;
   std::unique_ptr<jni::CJNIXBMCMediaSession> m_mediaSession;
@@ -276,13 +288,9 @@ private:
   void XBMC_Stop();
   bool XBMC_DestroyDisplay();
   bool XBMC_SetupDisplay();
+  static void CalculateGUIRatios();
+  static CRect m_droid2guiRatio;
 
   static uint32_t m_playback_state;
   static CRect m_surface_rect;
-
-public:
-  // CJNISurfaceHolderCallback interface
-  void surfaceChanged(CJNISurfaceHolder holder, int format, int width, int height) override;
-  void surfaceCreated(CJNISurfaceHolder holder) override;
-  void surfaceDestroyed(CJNISurfaceHolder holder) override;
 };
