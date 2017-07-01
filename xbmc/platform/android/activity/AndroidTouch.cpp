@@ -49,8 +49,16 @@ bool CAndroidTouch::onTouchEvent(AInputEvent* event)
     numPointers = CGenericTouchInputHandler::MAX_POINTERS;
 
   int32_t eventAction = AMotionEvent_getAction(event);
-  int8_t touchAction = eventAction & AMOTION_EVENT_ACTION_MASK;
   size_t touchPointer = eventAction >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
+  float x = AMotionEvent_getX(event, touchPointer);
+  float y = AMotionEvent_getY(event, touchPointer);
+
+  // Ignore event out of main view
+  CRect win_rect = CXBMCApp::GetSurfaceRect();
+  if (x < win_rect.x1 || x > win_rect.x2 || y < win_rect.y1 || y > win_rect.y2)
+    return false;
+
+  int8_t touchAction = eventAction & AMOTION_EVENT_ACTION_MASK;
   
   TouchInput touchEvent = TouchInputAbort;
   switch (touchAction)
@@ -75,8 +83,6 @@ bool CAndroidTouch::onTouchEvent(AInputEvent* event)
       break;
   }
 
-  float x = AMotionEvent_getX(event, touchPointer);
-  float y = AMotionEvent_getY(event, touchPointer);
   int64_t time = AMotionEvent_getEventTime(event);
 
   // first update all touch pointers
