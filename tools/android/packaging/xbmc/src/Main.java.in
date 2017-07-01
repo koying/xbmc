@@ -131,8 +131,10 @@ public class Main extends NativeActivity implements Choreographer.FrameCallback
     mCaptureProjection.stopCapture();
   }
 
-private void hideSystemUI()
-{
+  private void hideSystemUI()
+  {
+    mVideoLayout.setFitsSystemWindows(false);
+
     // Set the IMMERSIVE flag.
     // Set the content to appear under the system bars so that the content
     // doesn't resize when the system bars hide and show.
@@ -143,6 +145,15 @@ private void hideSystemUI()
             | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
             | View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
             | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+  }
+
+  private void showSystemUI()
+  {
+
+    mVideoLayout.setFitsSystemWindows(true);
+
+    mDecorView.setSystemUiVisibility(
+        View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
   }
 
   @Override
@@ -198,25 +209,7 @@ private void hideSystemUI()
     mMainView.setElevation(1);  // Always on Top
     mVideoLayout.addView(mMainView, layoutParams);
 
-    mDecorView.setOnSystemUiVisibilityChangeListener(new View.OnSystemUiVisibilityChangeListener()
-    {
-      @Override
-      public void onSystemUiVisibilityChange(int visibility)
-      {
-        if ((visibility & View.SYSTEM_UI_FLAG_HIDE_NAVIGATION) == 0)
-        {
-          handler.post(new Runnable()
-          {
-            public void run()
-            {
-              hideSystemUI();
-            }
-          });
-        }
-      }
-    });
-    setContentView(R.layout.activity_main);
-    mVideoLayout = findViewById(R.id.VideoLayout);
+    hideSystemUI();
   }
 
   @Override
@@ -242,7 +235,13 @@ private void hideSystemUI()
   {
     super.onResume();
 
-    hideSystemUI();
+    if (android.os.Build.VERSION.SDK_INT >= 24)
+    {
+      if (!isInMultiWindowMode())
+        hideSystemUI();
+    }
+    else
+      hideSystemUI();
 
     // New intent ?
     if (mNewIntent != null)
@@ -318,6 +317,10 @@ private void hideSystemUI()
   {
     if (android.os.Build.VERSION.SDK_INT >= 24)
     {
+      if (isInMultiWindowMode)
+        showSystemUI();
+      else
+        hideSystemUI();
       _onMultiWindowModeChanged(isInMultiWindowMode);
       super.onMultiWindowModeChanged(isInMultiWindowMode);
     }
