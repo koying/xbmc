@@ -1,5 +1,7 @@
 package @APP_PACKAGE@;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.os.Build.VERSION_CODES;
 import android.os.Build;
@@ -29,6 +31,9 @@ public class Main extends NativeActivity implements Choreographer.FrameCallback
 {
   private static final String TAG = "@APP_NAME@";
   private static final int INTENT_RESULT_PROJECT_CODE = 4658;
+  private static final int XBMC_EXITCODE_POWERDOWN = 64;
+  private static final int XBMC_EXITCODE_RESTARTAPP= 65;
+  private static final int XBMC_EXITCODE_REBOOT    = 66;
 
   public static Main MainActivity = null;
   public XBMCMainView mMainView = null;
@@ -302,6 +307,17 @@ public class Main extends NativeActivity implements Choreographer.FrameCallback
     manager.unregisterInputDeviceListener(mInputDeviceListener);
 
     getApplicationContext().getContentResolver().unregisterContentObserver(mSettingsContentObserver);
+
+    Log.i(TAG, "onDestroy: exit code = " + mExitCode);
+    if (mExitCode == XBMC_EXITCODE_RESTARTAPP)
+    {
+      Intent mStartActivity = new Intent(this, Main.class);
+      int mPendingIntentId = 123456;
+      PendingIntent mPendingIntent = PendingIntent.getActivity(this, mPendingIntentId, mStartActivity, PendingIntent.FLAG_CANCEL_CURRENT);
+      AlarmManager mgr = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+      mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 100, mPendingIntent);
+    }
+
     super.onDestroy();
   }
 
