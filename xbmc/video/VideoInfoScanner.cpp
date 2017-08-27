@@ -1816,7 +1816,7 @@ namespace VIDEO
         pDialog->Progress();
       }
 
-      *pItem->GetVideoInfoTag() = movieDetails;
+      pItem->GetVideoInfoTag()->Enrich(movieDetails);
       return true;
     }
     return false; // no info found, or cancelled
