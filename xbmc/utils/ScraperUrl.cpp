@@ -54,6 +54,11 @@ CScraperUrl::CScraperUrl()
 
 CScraperUrl::~CScraperUrl() = default;
 
+bool CScraperUrl::IsEmpty() const
+{
+  return m_url.empty();
+}
+
 void CScraperUrl::Clear()
 {
   m_url.clear();
