@@ -20,12 +20,6 @@ CONFIGURE=cp -f $(CONFIG_SUB) $(CONFIG_GUESS) .; \
                       --with-included-libtasn1 --enable-local-libopts --disable-doc --disable-tests --disable-guile \
                       $(CONFIGURE_HACKS)
 
-ifeq ($(OS), android)
-ifeq (arm64, $(findstring arm64, $(CPU)))
-CONFIGURE+= --disable-hardware-acceleration
-endif
-endif
-
 LIBDYLIB=$(PLATFORM)/lib/.libs/lib$(LIBNAME).a
 
 CLEAN_FILES=$(ARCHIVE) $(PLATFORM)
