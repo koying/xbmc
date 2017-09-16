@@ -557,11 +557,6 @@ extern "C"
       dll_fclose(stream);
       return dll_fopen(path, mode);
     }
-    else if (!IS_STD_STREAM(stream))
-    {
-      // Translate the path
-      return freopen(CSpecialProtocol::TranslatePath(path).c_str(), mode, stream);
-    }
 
     // error
     // close stream and return NULL
@@ -707,14 +702,9 @@ extern "C"
     {
       dll_lseeki64(fd, 0, SEEK_SET);
     }
-    else if (!IS_STD_STREAM(stream))
-    {
-      // it might be something else than a file, let the operating system handle it
-      rewind(stream);
-    }
     else
     {
-    CLog::Log(LOGERROR, "%s emulated function failed",  __FUNCTION__);
+      CLog::Log(LOGERROR, "%s emulated function failed",  __FUNCTION__);
     }
   }
 
@@ -726,16 +716,6 @@ extern "C"
     {
       g_emuFileWrapper.LockFileObjectByDescriptor(fd);
       return;
-    }
-    else if (!IS_STD_STREAM(stream))
-    {
-      // it might be something else than a file, let the operating system handle it
-#ifdef TARGET_POSIX
-      flockfile(stream);
-      return;
-#else
-      CLog::Log(LOGERROR, "%s: flockfile not available on non-linux platforms",  __FUNCTION__);
-#endif
     }
     CLog::Log(LOGERROR, "%s emulated function failed",  __FUNCTION__);
   }
@@ -749,15 +729,6 @@ extern "C"
         return 0;
       return -1;
     }
-    else if (!IS_STD_STREAM(stream))
-    {
-      // it might be something else than a file, let the operating system handle it
-#ifdef TARGET_POSIX
-      return ftrylockfile(stream);
-#else
-      CLog::Log(LOGERROR, "%s: ftrylockfile not available on non-linux platforms",  __FUNCTION__);
-#endif
-    }
     CLog::Log(LOGERROR, "%s emulated function failed",  __FUNCTION__);
     return -1;
   }
@@ -770,16 +741,6 @@ extern "C"
       g_emuFileWrapper.UnlockFileObjectByDescriptor(fd);
       return;
     }
-    else if (!IS_STD_STREAM(stream))
-    {
-      // it might be something else than a file, let the operating system handle it
-#ifdef TARGET_POSIX
-      funlockfile(stream);
-      return;
-#else
-      CLog::Log(LOGERROR, "%s: funlockfile not available on non-linux platforms",  __FUNCTION__);
-#endif
-    }
     CLog::Log(LOGERROR, "%s emulated function failed",  __FUNCTION__);
   }
 
@@ -789,11 +750,6 @@ extern "C"
     if (fd >= 0)
     {
       return dll_close(fd) == 0 ? 0 : EOF;
-    }
-    else if (!IS_STD_STREAM(stream))
-    {
-      // it might be something else than a file, let the operating system handle it
-      return fclose(stream);
     }
     CLog::Log(LOGERROR, "%s emulated function failed",  __FUNCTION__);
     return EOF;
@@ -1114,12 +1070,6 @@ extern "C"
       }
       else return NULL; //eof
     }
-    else if (!IS_STD_STREAM(stream))
-    {
-      // it might be something else than a file, or the file is not emulated
-      // let the operating system handle it
-      return fgets(pszString, num, stream);
-    }
     CLog::Log(LOGERROR, "%s emulated function failed",  __FUNCTION__);
     return NULL;
   }
@@ -1131,12 +1081,6 @@ extern "C"
     {
       if (pFile->GetPosition() < pFile->GetLength()) return 0;
       else return 1;
-    }
-    else if (!IS_STD_STREAM(stream))
-    {
-      // it might be something else than a file, or the file is not emulated
-      // let the operating system handle it
-      return feof(stream);
     }
     CLog::Log(LOGERROR, "%s emulated function failed",  __FUNCTION__);
     return 1; // eof by default
@@ -1161,11 +1105,6 @@ extern "C"
       } while (bufSize > read);
       return read / size;
     }
-    else if (!IS_STD_STREAM(stream))
-    {
-      // it might be something else than a file, let the operating system handle it
-      return fread(buffer, size, count, stream);
-    }
     CLog::Log(LOGERROR, "%s emulated function failed",  __FUNCTION__);
     return 0;
   }
@@ -1182,12 +1121,6 @@ extern "C"
 
       return (int)buf;
     }
-    else if (!IS_STD_STREAM(stream))
-    {
-      // it might be something else than a file, or the file is not emulated
-      // let the operating system handle it
-      return getc(stream);
-    }
     CLog::Log(LOGERROR, "%s emulated function failed",  __FUNCTION__);
     return EOF;
   }
@@ -1198,12 +1131,6 @@ extern "C"
     {
       // This routine is normally implemented as a macro with the same result as fgetc().
       return dll_fgetc(stream);
-    }
-    else if (!IS_STD_STREAM(stream))
-    {
-      // it might be something else than a file, or the file is not emulated
-      // let the operating system handle it
-      return getc(stream);
     }
     CLog::Log(LOGERROR, "%s emulated function failed",  __FUNCTION__);
     return EOF;
@@ -1247,10 +1174,6 @@ extern "C"
     {
       return dll_fputc(c, stream);
     }
-    else
-    {
-      return putc(c, stream);
-    }
     return EOF;
   }
 
@@ -1280,12 +1203,6 @@ extern "C"
             return character;
         }
       }
-      else if (!IS_STD_STREAM(stream))
-      {
-        // it might be something else than a file, or the file is not emulated
-        // let the operating system handle it
-        return fputc(character, stream);
-      }
     }
     CLog::Log(LOGERROR, "%s emulated function failed",  __FUNCTION__);
     return EOF;
@@ -1305,12 +1222,6 @@ extern "C"
         size_t len = strlen(szLine);
         return dll_fwrite(static_cast<const void*>(szLine), sizeof(char), len, stream);
       }
-      else if (!IS_STD_STREAM(stream))
-      {
-        // it might be something else than a file, or the file is not emulated
-        // let the operating system handle it
-        return fputs(szLine, stream);
-      }
     }
 
     CLog::Log(LOGERROR, "%s emulated function failed",  __FUNCTION__);
@@ -1327,16 +1238,6 @@ extern "C"
         return 0;
       }
       else return -1;
-    }
-    else if (!IS_STD_STREAM(stream))
-    {
-      // it might be something else than a file, or the file is not emulated
-      // let the operating system handle it
-#if defined(TARGET_DARWIN) || defined(TARGET_FREEBSD) || defined(TARGET_ANDROID)
-      return fseek(stream, offset, origin);
-#else
-      return fseeko64(stream, offset, origin);
-#endif
     }
     CLog::Log(LOGERROR, "%s emulated function failed",  __FUNCTION__);
     return -1;
@@ -1371,12 +1272,6 @@ extern "C"
       }
       return d;
     }
-    else if (!IS_STD_STREAM(stream))
-    {
-      // it might be something else than a file, or the file is not emulated
-      // let the operating system handle it
-      return ungetc(c, stream);
-    }
     CLog::Log(LOGERROR, "%s emulated function failed",  __FUNCTION__);
     return EOF;
   }
@@ -1392,16 +1287,6 @@ extern "C"
     if (pFile != NULL)
     {
        return (off64_t)pFile->GetPosition();
-    }
-    else if (!IS_STD_STREAM(stream))
-    {
-      // it might be something else than a file, or the file is not emulated
-      // let the operating system handle it
-#if defined(TARGET_DARWIN) || defined(TARGET_FREEBSD) || defined(TARGET_ANDROID)
-      return ftello(stream);
-#else
-      return ftello64(stream);
-#endif
     }
     CLog::Log(LOGERROR, "%s emulated function failed",  __FUNCTION__);
     return -1;
@@ -1488,12 +1373,6 @@ extern "C"
         } while (bufSize > written);
         return written / size;
       }
-      else if (!IS_STD_STREAM(stream))
-      {
-        // it might be something else than a file, or the file is not emulated
-        // let the operating system handle it
-        return fwrite(buffer, size, count, stream);
-      }
     }
     CLog::Log(LOGERROR, "%s emulated function failed",  __FUNCTION__);
     return 0;
@@ -1506,12 +1385,6 @@ extern "C"
     {
       pFile->Flush();
       return 0;
-    }
-    else if (!IS_STD_STREAM(stream))
-    {
-      // it might be something else than a file, or the file is not emulated
-      // let the operating system handle it
-      return fflush(stream);
     }
 
     // std stream, no need to flush
@@ -1587,12 +1460,6 @@ extern "C"
         pFile->Write(tmp2, len);
         return len;
       }
-      else if (!IS_STD_STREAM(stream) && IS_VALID_STREAM(stream))
-      {
-        // it might be something else than a file, or the file is not emulated
-        // let the operating system handle it
-        return vfprintf(stream, format, va);
-      }
     }
 
     CLog::Log(LOGERROR, "%s emulated function failed",  __FUNCTION__);
@@ -1641,12 +1508,6 @@ extern "C"
 #endif
       return 0;
     }
-    else if (!IS_STD_STREAM(stream))
-    {
-      // it might be something else than a file, or the file is not emulated
-      // let the operating system handle it
-      return fgetpos(stream, pos);
-    }
     CLog::Log(LOGERROR, "%s emulated function failed",  __FUNCTION__);
     return EINVAL;
   }
@@ -1669,16 +1530,6 @@ extern "C"
         return EINVAL;
       }
     }
-    else if (!IS_STD_STREAM(stream))
-    {
-      // it might be something else than a file, or the file is not emulated
-      // let the operating system handle it
-#if !defined(TARGET_POSIX) || defined(TARGET_DARWIN) || defined(TARGET_FREEBSD) || defined(TARGET_ANDROID)
-      return fsetpos(stream, pos);
-#else
-      return fsetpos64(stream, pos);
-#endif
-    }
     CLog::Log(LOGERROR, "%s emulated function failed",  __FUNCTION__);
     return EINVAL;
   }
@@ -1695,12 +1546,6 @@ extern "C"
       tmpPos.__pos = (off64_t)(pos->__pos);
 #endif
       return dll_fsetpos64(stream, &tmpPos);
-    }
-    else if (!IS_STD_STREAM(stream))
-    {
-      // it might be something else than a file, or the file is not emulated
-      // let the operating system handle it
-      return fsetpos(stream, (fpos_t*)pos);
     }
     CLog::Log(LOGERROR, "%s emulated function failed",  __FUNCTION__);
     return EINVAL;
@@ -1738,10 +1583,6 @@ extern "C"
     if (g_emuFileWrapper.StreamIsEmulatedFile(stream))
     {
       // not implemented
-    }
-    else if (!IS_STD_STREAM(stream))
-    {
-      clearerr(stream);
     }
   }
 
