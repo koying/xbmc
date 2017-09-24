@@ -484,3 +484,5 @@ cmake/scripts/common
 cmake/scripts/android
 xbmc/listproviders
 xbmc/cores/VideoPlayer
+xbmc/network/android
+tools/android/packaging/xbmc/src/interfaces
