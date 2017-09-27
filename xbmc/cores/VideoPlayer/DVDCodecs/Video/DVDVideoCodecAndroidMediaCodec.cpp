@@ -263,6 +263,8 @@ void CMediaCodecVideoBuffer::UpdateTexImage()
 
 void CMediaCodecVideoBuffer::RenderUpdate(const CRect &DestRect, int64_t displayTime)
 {
+  CLog::Log(LOGDEBUG, "CMediaCodecVideoBuffer::RenderUpdate - %lld", displayTime);
+
   CRect surfRect = m_videoview->getSurfaceRect();
   if (DestRect != surfRect)
   {
@@ -281,6 +283,8 @@ void CMediaCodecVideoBuffer::RenderUpdate(const CRect &DestRect, int64_t display
   }
   else
     ReleaseOutputBuffer(true, displayTime);
+
+  CLog::Log(LOGDEBUG, ">>> CMediaCodecVideoBuffer::RenderUpdate - %lld", displayTime);
 }
 
 /*****************************************************************************/
@@ -626,7 +630,7 @@ bool CDVDVideoCodecAndroidMediaCodec::Open(CDVDStreamInfo &hints, CDVDCodecOptio
     if (IsBlacklisted(m_codecname))
       continue;
 
-    CLog::Log(LOGERROR, "CDVDVideoCodecAndroidMediaCodec::Open Testing codex:%s", m_codecname.c_str());
+    CLog::Log(LOGNOTICE, "CDVDVideoCodecAndroidMediaCodec::Open Testing codec:%s", m_codecname.c_str());
 
     bool codecIsSecure(m_codecname.find(".secure") != std::string::npos);
     if (needSecureDecoder)
