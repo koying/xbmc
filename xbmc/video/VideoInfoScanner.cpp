@@ -625,7 +625,7 @@ namespace VIDEO
     {
       if (retVal < 0) 
         return INFO_CANCELLED;
-      else if (retVal == 0 && CSettings::GetInstance().GetBool(CSettings::SETTING_VIDEOLIBRARY_IMPORTALL))
+      else if (retVal == 0 && CServiceBroker::GetSettings().GetBool(CSettings::SETTING_VIDEOLIBRARY_IMPORTALL))
       {
         pItem->GetVideoInfoTag()->m_strTitle = CURL::Decode(CURL(pItem->GetPath()).GetFileNameWithoutPath());
         if (AddVideo(pItem, CONTENT_MOVIES, bDirNames, useLocal) < 0)
@@ -645,7 +645,7 @@ namespace VIDEO
                    (result == CNfoFile::COMBINED_NFO
                     || result == CNfoFile::PARTIAL_NFO) ? &m_nfoReader : NULL,
                    pDlgProgress)
-          || CSettings::GetInstance().GetBool(CSettings::SETTING_VIDEOLIBRARY_IMPORTALL))
+          || CServiceBroker::GetSettings().GetBool(CSettings::SETTING_VIDEOLIBRARY_IMPORTALL))
     {
       if (AddVideo(pItem, info2->Content(), bDirNames, useLocal) < 0)
         return INFO_ERROR;
@@ -1122,7 +1122,7 @@ namespace VIDEO
       return true;
     }
 
-    if (CSettings::GetInstance().GetBool(CSettings::SETTING_VIDEOLIBRARY_IMPORTALL))
+    if (CServiceBroker::GetSettings().GetBool(CSettings::SETTING_VIDEOLIBRARY_IMPORTALL))
     {
       EPISODE episode;
       episode.strPath = item->GetPath();
@@ -1559,7 +1559,7 @@ namespace VIDEO
 
       if (episodes.empty())
       {
-        if (!CSettings::GetInstance().GetBool(CSettings::SETTING_VIDEOLIBRARY_IMPORTALL))
+        if (!CServiceBroker::GetSettings().GetBool(CSettings::SETTING_VIDEOLIBRARY_IMPORTALL))
         {
           CLog::Log(LOGERROR, "VideoInfoScanner: Asked to lookup episode %s"
                               " online, but we have no episode guide. Check your tvshow.nfo and make"
@@ -1680,7 +1680,7 @@ namespace VIDEO
       }
       else
       {
-        if (!episodes.empty() || !CSettings::GetInstance().GetBool(CSettings::SETTING_VIDEOLIBRARY_IMPORTALL))
+        if (!episodes.empty() || !CServiceBroker::GetSettings().GetBool(CSettings::SETTING_VIDEOLIBRARY_IMPORTALL))
         {
           CLog::Log(LOGDEBUG,"%s - no match for show: '%s', season: %d, episode: %d.%d, airdate: '%s', title: '%s'",
                     __FUNCTION__, showInfo.m_strTitle.c_str(), file->iSeason, file->iEpisode, file->iSubepisode,
