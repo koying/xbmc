@@ -645,7 +645,7 @@ namespace VIDEO
     {
       if (retVal < 0) 
         return INFO_CANCELLED;
-      else if (retVal == 0 && CSettings::GetInstance().GetBool(CSettings::SETTING_VIDEOLIBRARY_IMPORTALL))
+      else if (retVal == 0 && CServiceBroker::GetSettings().GetBool(CSettings::SETTING_VIDEOLIBRARY_IMPORTALL))
       {
         pItem->GetVideoInfoTag()->m_strTitle = CURL::Decode(CURL(pItem->GetPath()).GetFileNameWithoutPath());
         if (AddVideo(pItem, CONTENT_MOVIES, bDirNames, useLocal) < 0)
@@ -664,7 +664,8 @@ namespace VIDEO
     if (GetDetails(pItem, url, info2,
                    (result == CInfoScanner::COMBINED_NFO ||
                     result == CInfoScanner::OVERRIDE_NFO) ? loader.get() : nullptr,
-                   pDlgProgress))
+                   pDlgProgress)
+          || CServiceBroker::GetSettings().GetBool(CSettings::SETTING_VIDEOLIBRARY_IMPORTALL))
     {
       if (AddVideo(pItem, info2->Content(), bDirNames, useLocal) < 0)
         return INFO_ERROR;
@@ -1158,6 +1159,20 @@ namespace VIDEO
       }
       return true;
     }
+
+    if (CServiceBroker::GetSettings().GetBool(CSettings::SETTING_VIDEOLIBRARY_IMPORTALL))
+    {
+      EPISODE episode;
+      episode.strPath = item->GetPath();
+      episode.iSeason = 0;
+      episode.iEpisode = 0;
+      episode.cDate.SetValid(false);
+      episode.isFolder = false;
+      episodeList.push_back(episode);
+
+      return true;
+    }
+
     return false;
   }
 
@@ -1593,7 +1608,7 @@ namespace VIDEO
 
       if (episodes.empty())
       {
-        if (!CSettings::GetInstance().GetBool(CSettings::SETTING_VIDEOLIBRARY_IMPORTALL))
+        if (!CServiceBroker::GetSettings().GetBool(CSettings::SETTING_VIDEOLIBRARY_IMPORTALL))
         {
           CLog::Log(LOGERROR, "VideoInfoScanner: Asked to lookup episode %s"
                               " online, but we have no episode guide. Check your tvshow.nfo and make"
@@ -1714,7 +1729,7 @@ namespace VIDEO
       }
       else
       {
-        if (!episodes.empty() || !CSettings::GetInstance().GetBool(CSettings::SETTING_VIDEOLIBRARY_IMPORTALL))
+        if (!episodes.empty() || !CServiceBroker::GetSettings().GetBool(CSettings::SETTING_VIDEOLIBRARY_IMPORTALL))
         {
           CLog::Log(LOGDEBUG,"%s - no match for show: '%s', season: %d, episode: %d.%d, airdate: '%s', title: '%s'",
                     __FUNCTION__, showInfo.m_strTitle.c_str(), file->iSeason, file->iEpisode, file->iSubepisode,
