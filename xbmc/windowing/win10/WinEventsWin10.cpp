@@ -346,10 +346,45 @@ void CWinEventsWin10::OnPointerWheelChanged(CoreWindow^ sender, PointerEventArgs
 
 void CWinEventsWin10::Kodi_KeyEvent(unsigned int vkey, unsigned scancode, unsigned keycode, bool isDown)
 {
-  static auto downState = CoreVirtualKeyStates::Down;
-
-  XBMC_keysym keysym;
-  memset(&keysym, 0, sizeof(keysym));
+  switch (vkey)
+  {
+  case Windows::System::VirtualKey::GamepadA:
+  case Windows::System::VirtualKey::GamepadLeftThumbstickButton:
+  case Windows::System::VirtualKey::GamepadRightThumbstickButton:
+    keysym.sym = XBMCK_RETURN;
+    break;
+  case Windows::System::VirtualKey::GamepadB:
+    keysym.sym = XBMCK_BACKSPACE;
+    break;
+  case Windows::System::VirtualKey::GamepadDPadUp:
+  case Windows::System::VirtualKey::GamepadLeftThumbstickUp:
+  case Windows::System::VirtualKey::GamepadRightThumbstickUp:
+  case Windows::System::VirtualKey::NavigationUp:
+    keysym.sym = XBMCK_UP;
+    break;
+  case Windows::System::VirtualKey::GamepadDPadDown:
+  case Windows::System::VirtualKey::GamepadLeftThumbstickDown:
+  case Windows::System::VirtualKey::GamepadRightThumbstickDown:
+  case Windows::System::VirtualKey::NavigationDown:
+    keysym.sym = XBMCK_DOWN;
+    break;
+  case Windows::System::VirtualKey::GamepadDPadLeft:
+  case Windows::System::VirtualKey::GamepadLeftThumbstickLeft:
+  case Windows::System::VirtualKey::GamepadRightThumbstickLeft:
+  case Windows::System::VirtualKey::NavigationLeft:
+    keysym.sym = XBMCK_LEFT;
+    break;
+  case Windows::System::VirtualKey::GamepadDPadRight:
+  case Windows::System::VirtualKey::GamepadLeftThumbstickRight:
+  case Windows::System::VirtualKey::GamepadRightThumbstickRight:
+  case Windows::System::VirtualKey::NavigationRight:
+    keysym.sym = XBMCK_RIGHT;
+    break;
+  default:
+    keysym.sym = KODI::WINDOWING::WINDOWS::VK_keymap[static_cast<UINT>(vkey)];
+    break;
+  }
+  keysym.unicode = 0;
   keysym.scancode = scancode;
   keysym.sym = KODI::WINDOWING::WINDOWS::VK_keymap[vkey];
   keysym.unicode = keycode;
@@ -385,6 +420,44 @@ void CWinEventsWin10::Kodi_KeyEvent(unsigned int vkey, unsigned scancode, unsign
     mod |= XBMCKMOD_LSUPER;
   if ((window->GetKeyState(VirtualKey::RightWindows) & downState) == downState)
     mod |= XBMCKMOD_LSUPER;
+  keysym.mod = (XBMCMod)mod;
+}
+
+VirtualKey keyDown = VirtualKey::None;
+
+void CWinEventsWin10::OnKeyDown(CoreWindow^ sender, KeyEventArgs^ args)
+{
+  int vk = static_cast<unsigned>(args->VirtualKey);
+  if ((vk == 0x08) // VK_BACK
+    || (vk == 0x09) // VK_TAB
+    || (vk == 0x0C) // VK_CLEAR
+    || (vk == 0x0D) // VK_RETURN
+    || (vk == 0x1B) // VK_ESCAPE
+    || (vk == 0x20) // VK_SPACE
+    || (vk >= 0x30 && vk <= 0x39) // numeric keys
+    || (vk >= 0x41 && vk <= 0x5A) // alphabetic keys
+    || (vk >= 0x6A && vk <= 0x6F) // keypad keys except numeric
+    || (vk >= 0x92 && vk <= 0x96) // OEM specific
+    || (vk >= 0xBA && vk <= 0xC0) // OEM specific
+    || (vk >= 0xDB && vk <= 0xDF) // OEM specific
+    || (vk >= 0xE1 && vk <= 0xF5 && vk != 0xE5 && vk != 0xE7 && vk != 0xE8) // OEM specific
+    )
+  {
+    // Those will be handled in OnCharacterReceived
+    // store VirtualKey for future processing
+    keyDown = args->VirtualKey;
+    return;
+  }
+
+  XBMC_keysym keysym;
+  TranslateKey(sender, keysym, args->VirtualKey, args->KeyStatus.ScanCode, 0);
+
+  XBMC_Event newEvent;
+  memset(&newEvent, 0, sizeof(newEvent));
+  newEvent.type = XBMC_KEYDOWN;
+  newEvent.key.keysym = keysym;
+  CWinEvents::MessagePush(&newEvent);
+}
 
   keysym.mod = (XBMCMod)mod;
 
