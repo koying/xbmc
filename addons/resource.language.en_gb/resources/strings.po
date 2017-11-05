@@ -21522,7 +21522,12 @@ msgctxt "#39027"
 msgid "Sortname"
 msgstr ""
 
-#empty strings from id 39028 to 39099
+#: system/settings/android.xml
+msgctxt "#39028"
+msgid "1080"
+msgstr ""
+
+#empty strings from id 39029 to 39099
 
 #: system/settings/settings.xml
 msgctxt "#39100"
