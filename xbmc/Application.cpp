@@ -3749,7 +3749,7 @@ void CApplication::ActivateScreenSaver(bool forceType /*= false */)
       || m_screensaverIdInUse == "screensaver.xbmc.builtin.system")
   {
 #ifdef TARGET_ANDROID
-    if (m_screenSaver->ID() == "screensaver.xbmc.builtin.system")
+    if (m_screensaverIdInUse == "screensaver.xbmc.builtin.system")
       CXBMCApp::EnableWakeLock(false);
 #endif
     return;
