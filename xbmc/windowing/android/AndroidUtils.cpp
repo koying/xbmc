@@ -213,6 +213,14 @@ bool CAndroidUtils::GetNativeResolution(RESOLUTION_INFO *res) const
   if (s_hasModeApi)
   {
     *res = s_res_cur_displayMode;
+    if (m_width && m_height)
+    {
+      res->iWidth = m_width;
+      res->iHeight = m_height;
+      res->iScreenWidth  = res->iWidth;
+      res->iScreenHeight = res->iHeight;
+      res->iSubtitles    = (int)(0.965 * res->iHeight);
+    }
     return true;
   }
 
@@ -265,6 +273,18 @@ bool CAndroidUtils::ProbeResolutions(std::vector<RESOLUTION_INFO> &resolutions)
 {
   if (s_hasModeApi)
   {
+    for(RESOLUTION_INFO res : s_res_displayModes)
+    {
+      if (m_width && m_height)
+      {
+        res.iWidth =  m_width;
+        res.iHeight = m_height;
+        res.iScreenWidth = res.iWidth;
+        res.iScreenHeight = res.iHeight;
+        res.iSubtitles    = (int)(0.965 * res.iHeight);
+      }
+      resolutions.push_back(res);
+    }
     resolutions.insert(resolutions.end(), s_res_displayModes.begin(), s_res_displayModes.end());
     return true;
   }
