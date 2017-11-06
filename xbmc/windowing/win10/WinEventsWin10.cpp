@@ -419,7 +419,7 @@ void CWinEventsWin10::OnKeyDown(CoreWindow^ sender, KeyEventArgs^ args)
     || (vk == 0x20) // VK_SPACE
     || (vk >= 0x30 && vk <= 0x39) // numeric keys
     || (vk >= 0x41 && vk <= 0x5A) // alphabetic keys
-    || (vk >= 0x6A && vk <= 0x6F) // keypad keys except numeric
+    || (vk >= 0x60 && vk <= 0x6F) // keypad keys
     || (vk >= 0x92 && vk <= 0x96) // OEM specific
     || (vk >= 0xBA && vk <= 0xC0) // OEM specific
     || (vk >= 0xDB && vk <= 0xDF) // OEM specific
