@@ -439,18 +439,5 @@ void CWinEventsWin10::OnDisplayContentsInvalidated(DisplayInformation^ sender, P
 
 void CWinEventsWin10::OnBackRequested(Platform::Object^ sender, Windows::UI::Core::BackRequestedEventArgs^ args)
 {
-  XBMC_keysym keysym;
-  keysym.sym = XBMCK_BACKSPACE;
-
-  XBMC_Event newEvent;
-  memset(&newEvent, 0, sizeof(newEvent));
-  newEvent.key.keysym = keysym;
-
-  newEvent.type = XBMC_KEYDOWN;
-  CWinEvents::MessagePush(&newEvent);
-
-  newEvent.type = XBMC_KEYUP;
-  CWinEvents::MessagePush(&newEvent);
-
   args->Handled = true;
 }
