@@ -381,20 +381,20 @@ bool CWIN32Util::XBMCShellExecute(const std::string &strPath, bool bWaitForScrip
 std::vector<std::string> CWIN32Util::GetDiskUsage()
 {
   std::vector<std::string> result;
+  ULARGE_INTEGER ULTotal = { { 0 } };
+  ULARGE_INTEGER ULTotalFree = { { 0 } };
+
 #ifdef TARGET_WINDOWS_STORE
-  auto propertyKeys = ref new Platform::Collections::Vector<Platform::String^>();
-  propertyKeys->Append("System.FreeSpace");
+  std::string strRet;
 
-  // gets free space for drive where app is installed
-  StorageFolder^ localFolder = ApplicationData::Current->LocalFolder;
-  auto retrivied = Wait(localFolder->Properties->RetrievePropertiesAsync(propertyKeys));
-  auto freeSpace = (uint64_t)retrivied->Lookup("System.FreeSpace");
-  auto strRet = KODI::PLATFORM::WINDOWS::FromW(StringUtils::Format(L"%d MB %s", int(freeSpace / (1024 * 1024)), g_localizeStrings.Get(160).c_str()));
+  Platform::String^ localfolder = Windows::Storage::ApplicationData::Current->LocalFolder->Path;
+  std::wstring folderNameW(localfolder->Begin());
+
+  GetDiskFreeSpaceEx(folderNameW.c_str(), nullptr, &ULTotal, &ULTotalFree);
+  strRet = KODI::PLATFORM::WINDOWS::FromW(StringUtils::Format(L"%d MB %s", (ULTotalFree.QuadPart / (1024 * 1024)), g_localizeStrings.Get(160).c_str()));
   result.push_back(strRet);
-#else
-  ULARGE_INTEGER ULTotal= { { 0 } };
-  ULARGE_INTEGER ULTotalFree= { { 0 } };
 
+#else
   std::unique_ptr<wchar_t> pcBuffer;
   DWORD dwStrLength= GetLogicalDriveStrings( 0, pcBuffer.get() );
   if( dwStrLength != 0 )
