@@ -294,14 +294,53 @@ void CWinEventsWin10::OnPointerWheelChanged(CoreWindow^ sender, PointerEventArgs
   CWinEvents::MessagePush(&newEvent);
 }
 
-static void Kodi_KeyEvent(unsigned int vkey, unsigned scancode, unsigned keycode, bool isDown)
+static void Kodi_KeyEvent(VirtualKey vkey, unsigned scancode, unsigned keycode, bool isDown)
 {
   static auto downState = CoreVirtualKeyStates::Down;
 
   XBMC_keysym keysym;
   memset(&keysym, 0, sizeof(keysym));
+
+  switch (vkey)
+  {
+  case Windows::System::VirtualKey::GamepadA:
+  case Windows::System::VirtualKey::GamepadLeftThumbstickButton:
+  case Windows::System::VirtualKey::GamepadRightThumbstickButton:
+    keysym.sym = XBMCK_RETURN;
+    break;
+  case Windows::System::VirtualKey::GamepadB:
+    keysym.sym = XBMCK_BACKSPACE;
+    break;
+  case Windows::System::VirtualKey::GamepadDPadUp:
+  case Windows::System::VirtualKey::GamepadLeftThumbstickUp:
+  case Windows::System::VirtualKey::GamepadRightThumbstickUp:
+  case Windows::System::VirtualKey::NavigationUp:
+    keysym.sym = XBMCK_UP;
+    break;
+  case Windows::System::VirtualKey::GamepadDPadDown:
+  case Windows::System::VirtualKey::GamepadLeftThumbstickDown:
+  case Windows::System::VirtualKey::GamepadRightThumbstickDown:
+  case Windows::System::VirtualKey::NavigationDown:
+    keysym.sym = XBMCK_DOWN;
+    break;
+  case Windows::System::VirtualKey::GamepadDPadLeft:
+  case Windows::System::VirtualKey::GamepadLeftThumbstickLeft:
+  case Windows::System::VirtualKey::GamepadRightThumbstickLeft:
+  case Windows::System::VirtualKey::NavigationLeft:
+    keysym.sym = XBMCK_LEFT;
+    break;
+  case Windows::System::VirtualKey::GamepadDPadRight:
+  case Windows::System::VirtualKey::GamepadLeftThumbstickRight:
+  case Windows::System::VirtualKey::GamepadRightThumbstickRight:
+  case Windows::System::VirtualKey::NavigationRight:
+    keysym.sym = XBMCK_RIGHT;
+    break;
+  default:
+    keysym.sym = KODI::WINDOWING::WINDOWS::VK_keymap[static_cast<UINT>(vkey)];
+    break;
+  }
+
   keysym.scancode = scancode;
-  keysym.sym = KODI::WINDOWING::WINDOWS::VK_keymap[vkey];
   keysym.unicode = keycode;
 
   auto window = CoreWindow::GetForCurrentThread();
@@ -406,7 +445,7 @@ void CWinEventsWin10::OnAcceleratorKeyActivated(CoreDispatcher^ sender, Accelera
     break;
   }
 
-  Kodi_KeyEvent(vk, args->KeyStatus.ScanCode, keyCode, isDown);
+  Kodi_KeyEvent(args->VirtualKey, args->KeyStatus.ScanCode, keyCode, isDown);
 }
 
 // DisplayInformation event handlers.
