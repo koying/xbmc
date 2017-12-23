@@ -22,6 +22,7 @@
 #include "GraphicContext.h"
 #include "utils/log.h"
 #include "utils/MathUtils.h"
+#include "ServiceBroker.h"
 #include "settings/AdvancedSettings.h"
 #include "settings/Settings.h"
 #include "settings/DisplaySettings.h"
@@ -195,7 +196,7 @@ void CResolutionUtils::FindResolutionFromFpsMatch(float fps, int width, bool is3
 RESOLUTION CResolutionUtils::FindClosestResolution(float fps, int width, bool is3D, float multiplier, RESOLUTION current, float& weight)
 {
   RESOLUTION_INFO curr = g_graphicsContext.GetResInfo(current);
-  bool adjustReso = CSettings::GetInstance().GetBool(CSettings::SETTING_VIDEOPLAYER_ADJUSTRESOLUTION);
+  bool adjustReso = CServiceBroker::GetSettings().GetBool(CSettings::SETTING_VIDEOPLAYER_ADJUSTRESOLUTION);
   float fRefreshRate = fps;
 
   int curr_diff = curr.iScreenWidth - width;
