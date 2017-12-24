@@ -66,16 +66,14 @@
 #include "settings/AdvancedSettings.h"
 #include "interfaces/AnnouncementManager.h"
 #include "Application.h"
-#include "AppParamParser.h"
 #include "messaging/ApplicationMessenger.h"
 #include "CompileInfo.h"
 #include "settings/DisplaySettings.h"
 #include "guilib/GraphicContext.h"
 #include "guilib/GUIWindowManager.h"
+
 // Audio Engine includes for Factory and interfaces
 #include "cores/AudioEngine/Interfaces/AE.h"
-#include "cores/AudioEngine/AESinkFactory.h"
-#include "cores/AudioEngine/Sinks/AESinkAUDIOTRACK.h"
 
 #include "ServiceBroker.h"
 #include "GUIInfoManager.h"
@@ -95,9 +93,7 @@
 #include "utils/Variant.h"
 #include "windowing/android/VideoSyncAndroid.h"
 #include "windowing/WinEvents.h"
-#include "platform/xbmc.h"
 
-#define GIGABYTES       1073741824
 #define CAPTURE_QUEUE_MAXDEPTH 3
 
 #define ACTION_XBMC_RESUME "android.intent.XBMC_RESUME"
@@ -112,15 +108,8 @@ using namespace KODI::MESSAGING;
 using namespace ANNOUNCEMENT;
 using namespace jni;
 
-template<class T, void(T::*fn)()>
-void* thread_run(void* obj)
-{
-  (static_cast<T*>(obj)->*fn)();
-  return NULL;
-}
-
 CXBMCApp* CXBMCApp::m_xbmcappinstance = NULL;
-CCriticalSection CXBMCApp::m_AppMutex;
+CCriticalSection CXBMCApp::m_LayoutMutex;
 
 std::unique_ptr<CJNIXBMCMainView> CXBMCApp::m_mainView;
 ANativeActivity *CXBMCApp::m_activity = NULL;
@@ -169,7 +158,7 @@ CXBMCApp::CXBMCApp(ANativeActivity* nativeActivity)
   m_audioFocusListener.reset(new CJNIXBMCAudioManagerOnAudioFocusChangeListener());
   m_broadcastReceiver.reset(new CJNIXBMCBroadcastReceiver(this));
   m_mainView.reset(new CJNIXBMCMainView(this));
-  m_firstrun = true;
+  m_firstActivityRun = true;
   m_exiting = false;
   android_printf("CXBMCApp: Created");
 }
@@ -216,16 +205,12 @@ void CXBMCApp::onStart()
 {
   android_printf("%s: ", __PRETTY_FUNCTION__);
 
-  if (m_firstrun)
+  if (m_firstActivityRun)
   {
-    // Register sink
-    AE::CAESinkFactory::ClearSinks();
-    CAESinkAUDIOTRACK::Register();
-    pthread_attr_t attr;
-    pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-    pthread_create(&m_thread, &attr, thread_run<CXBMCApp, &CXBMCApp::run>, this);
-    pthread_attr_destroy(&attr);
+    if (!g_application.IsInitialized())
+      abort();
+
+    CApplicationMessenger::GetInstance().PostMsg(TMSG_DISPLAY_INIT);
 
     // Some intent filters MUST be registered in code rather than through the manifest
     CJNIIntentFilter intentFilter;
@@ -238,6 +223,8 @@ void CXBMCApp::onStart()
     registerReceiver(*m_broadcastReceiver, intentFilter);
 
     m_mediaSession.reset(new CJNIXBMCMediaSession());
+
+    m_firstActivityRun = false;
   }
 }
 
@@ -293,17 +280,12 @@ void CXBMCApp::onDestroy()
   android_printf("%s", __PRETTY_FUNCTION__);
 
   unregisterReceiver(*m_broadcastReceiver);
-
   m_mediaSession.release();
 
-  // If android is forcing us to stop, ask XBMC to exit then wait until it's
-  // been destroyed.
-  if (!m_exiting)
-  {
-    XBMC_Stop();
-    pthread_join(m_thread, NULL);
-    android_printf(" => XBMC finished");
-  }
+  if (m_playback_state & PLAYBACK_STATE_PLAYING)
+    CApplicationMessenger::GetInstance().SendMsg(TMSG_GUI_ACTION, WINDOW_INVALID, -1, static_cast<void*>(new CAction(ACTION_STOP)));
+
+  CApplicationMessenger::GetInstance().PostMsg(TMSG_DISPLAY_DESTROY);
 }
 
 void CXBMCApp::onSaveState(void **data, size_t *size)
@@ -321,7 +303,14 @@ void CXBMCApp::onConfigurationChanged()
 void CXBMCApp::onLowMemory()
 {
   android_printf("%s: ", __PRETTY_FUNCTION__);
-  // can't do much as we don't want to close completely
+
+  if (!m_isResumed)
+  {
+    if (m_playback_state & PLAYBACK_STATE_PLAYING)
+      CApplicationMessenger::GetInstance().SendMsg(TMSG_GUI_ACTION, WINDOW_INVALID, -1, static_cast<void*>(new CAction(ACTION_STOP)));
+
+    CApplicationMessenger::GetInstance().PostMsg(TMSG_DISPLAY_DESTROY);
+  }
 }
 
 void CXBMCApp::onCreateWindow(ANativeWindow* window)
@@ -356,11 +345,19 @@ void CXBMCApp::onLostFocus()
 
 void CXBMCApp::Initialize()
 {
-  g_application.m_ServiceManager->GetAnnouncementManager().AddAnnouncer(CXBMCApp::get());  
+  g_application.m_ServiceManager->GetAnnouncementManager().AddAnnouncer(this);
 }
 
-void CXBMCApp::Deinitialize()
+void CXBMCApp::Deinitialize(int status)
 {
+  // Pass the return code to Java
+  set_field(m_object, "mExitCode", status);
+
+  // If we are have not been force by Android to exit, notify its finish routine.
+  // This will cause android to run through its teardown events, it calls:
+  // onPause(), onLostFocus(), onDestroyWindow(), onStop(), onDestroy().
+  ANativeActivity_finish(m_activity);
+  m_exiting=true;
 }
 
 bool CXBMCApp::EnableWakeLock(bool on)
@@ -456,66 +453,6 @@ bool CXBMCApp::IsHeadsetPlugged()
   return m_headsetPlugged;
 }
 
-void CXBMCApp::run()
-{
-  int status = 0;
-
-  SetupEnv();
-
-  // Wait for main window
-  ANativeWindow* nativeWindow = CXBMCApp::GetNativeWindow(30000);
-  if (!nativeWindow)
-    return;
-
-  m_firstrun=false;
-  android_printf(" => running XBMC_Run...");
-  try
-  {
-    CAppParamParser appParamParser;
-    status = XBMC_Run(true, appParamParser);
-    android_printf(" => XBMC_Run finished with %d", status);
-  }
-  catch(...)
-  {
-    android_printf("ERROR: Exception caught on main loop. Exiting");
-  }
-  m_exiting=true;
-
-  // Pass the return code to Java
-  set_field(m_object, "mExitCode", status);
-
-  // If we are have not been force by Android to exit, notify its finish routine.
-  // This will cause android to run through its teardown events, it calls:
-  // onPause(), onLostFocus(), onDestroyWindow(), onStop(), onDestroy().
-  ANativeActivity_finish(m_activity);
-}
-
-void CXBMCApp::XBMC_Pause(bool pause)
-{
-  android_printf("XBMC_Pause(%s)", pause ? "true" : "false");
-}
-
-void CXBMCApp::XBMC_Stop()
-{
-  CApplicationMessenger::GetInstance().PostMsg(TMSG_QUIT);
-}
-
-bool CXBMCApp::XBMC_SetupDisplay()
-{
-  android_printf("XBMC_SetupDisplay()");
-  bool result;
-  CApplicationMessenger::GetInstance().SendMsg(TMSG_DISPLAY_SETUP, -1, -1, static_cast<void*>(&result));
-  return result;
-}
-
-bool CXBMCApp::XBMC_DestroyDisplay()
-{
-  android_printf("XBMC_DestroyDisplay()");
-  bool result;
-  CApplicationMessenger::GetInstance().SendMsg(TMSG_DISPLAY_DESTROY, -1, -1, static_cast<void*>(&result));
-  return result;
-}
-
 int CXBMCApp::SetBuffersGeometry(int width, int height, int format)
 {
   return ANativeWindow_setBuffersGeometry(m_window, width, height, format);
@@ -596,6 +533,12 @@ void CXBMCApp::BringToFront()
   }
 }
 
+void CXBMCApp::Minimize()
+{
+  CApplicationMessenger::GetInstance().PostMsg(TMSG_DISPLAY_DESTROY);
+  moveTaskToBack(true);
+}
+
 int CXBMCApp::GetDPI()
 {
   if (m_activity == NULL || m_activity->assetManager == NULL)
@@ -613,21 +556,21 @@ int CXBMCApp::GetDPI()
 
 CRect CXBMCApp::GetSurfaceRect()
 {
-  CSingleLock lock(m_AppMutex);
+  CSingleLock lock(m_LayoutMutex);
 
   return m_surface_rect;
 }
 
 CRect CXBMCApp::MapRenderToDroid(const CRect& srcRect)
 {
-  CSingleLock lock(m_AppMutex);
+  CSingleLock lock(m_LayoutMutex);
 
   return CRect(srcRect.x1 / m_droid2guiRatio.x2, srcRect.y1 / m_droid2guiRatio.y2, srcRect.x2 / m_droid2guiRatio.x2, srcRect.y2 / m_droid2guiRatio.y2);
 }
 
 CPoint CXBMCApp::MapDroidToGui(const CPoint& src)
 {
-  CSingleLock lock(m_AppMutex);
+  CSingleLock lock(m_LayoutMutex);
 
   return CPoint((src.x - m_droid2guiRatio.x1) * m_droid2guiRatio.x2, (src.y - m_droid2guiRatio.y1) * m_droid2guiRatio.y2);
 }
@@ -841,86 +784,6 @@ int CXBMCApp::GetBatteryLevel()
   return m_batteryLevel;
 }
 
-bool CXBMCApp::GetExternalStorage(std::string &path, const std::string &type /* = "" */)
-{
-  std::string sType;
-  std::string mountedState;
-  bool mounted = false;
-
-  if(type == "files" || type.empty())
-  {
-    CJNIFile external = CJNIEnvironment::getExternalStorageDirectory();
-    if (external)
-      path = external.getAbsolutePath();
-  }
-  else
-  {
-    if (type == "music")
-      sType = "Music"; // Environment.DIRECTORY_MUSIC
-    else if (type == "videos")
-      sType = "Movies"; // Environment.DIRECTORY_MOVIES
-    else if (type == "pictures")
-      sType = "Pictures"; // Environment.DIRECTORY_PICTURES
-    else if (type == "photos")
-      sType = "DCIM"; // Environment.DIRECTORY_DCIM
-    else if (type == "downloads")
-      sType = "Download"; // Environment.DIRECTORY_DOWNLOADS
-    if (!sType.empty())
-    {
-      CJNIFile external = CJNIEnvironment::getExternalStoragePublicDirectory(sType);
-      if (external)
-        path = external.getAbsolutePath();
-    }
-  }
-  mountedState = CJNIEnvironment::getExternalStorageState();
-  mounted = (mountedState == "mounted" || mountedState == "mounted_ro");
-  return mounted && !path.empty();
-}
-
-bool CXBMCApp::GetStorageUsage(const std::string &path, std::string &usage)
-{
-#define PATH_MAXLEN 50
-
-  if (path.empty())
-  {
-    std::ostringstream fmt;
-    fmt.width(PATH_MAXLEN);  fmt << std::left  << "Filesystem";
-    fmt.width(12);  fmt << std::right << "Size";
-    fmt.width(12);  fmt << "Used";
-    fmt.width(12);  fmt << "Avail";
-    fmt.width(12);  fmt << "Use %";
-
-    usage = fmt.str();
-    return false;
-  }
-
-  CJNIStatFs fileStat(path);
-  int blockSize = fileStat.getBlockSize();
-  int blockCount = fileStat.getBlockCount();
-  int freeBlocks = fileStat.getFreeBlocks();
-
-  if (blockSize <= 0 || blockCount <= 0 || freeBlocks < 0)
-    return false;
-
-  float totalSize = (float)blockSize * blockCount / GIGABYTES;
-  float freeSize = (float)blockSize * freeBlocks / GIGABYTES;
-  float usedSize = totalSize - freeSize;
-  float usedPercentage = usedSize / totalSize * 100;
-
-  std::ostringstream fmt;
-  fmt << std::fixed;
-  fmt.precision(1);
-  fmt.width(PATH_MAXLEN);  fmt << std::left  << (path.size() < PATH_MAXLEN-1 ? path : StringUtils::Left(path, PATH_MAXLEN-4) + "...");
-  fmt.width(12);  fmt << std::right << totalSize << "G"; // size in GB
-  fmt.width(12);  fmt << usedSize << "G"; // used in GB
-  fmt.width(12);  fmt << freeSize << "G"; // free
-  fmt.precision(0);
-  fmt.width(12);  fmt << usedPercentage << "%"; // percentage used
-
-  usage = fmt.str();
-  return true;
-}
-
 // Used in Application.cpp to figure out volume steps
 int CXBMCApp::GetMaxSystemVolume()
 {
@@ -965,10 +828,6 @@ void CXBMCApp::SetSystemVolume(float percent)
     android_printf("CXBMCApp::SetSystemVolume: Could not get Audio Manager");
 }
 
-void CXBMCApp::InitDirectories()
-{
-  CSpecialProtocol::SetXBMCBinAddonPath(getApplicationInfo().nativeLibraryDir.c_str());
-}
 
 void CXBMCApp::onReceive(CJNIIntent intent)
 {
@@ -1266,53 +1125,6 @@ bool CXBMCApp::WaitVSync(unsigned int milliSeconds)
   return m_vsyncEvent.WaitMSec(milliSeconds);
 }
 
-void CXBMCApp::SetupEnv()
-{
-  setenv("XBMC_ANDROID_SYSTEM_LIBS", CJNISystem::getProperty("java.library.path").c_str(), 0);
-  setenv("XBMC_ANDROID_LIBS", getApplicationInfo().nativeLibraryDir.c_str(), 0);
-  setenv("XBMC_ANDROID_APK", getPackageResourcePath().c_str(), 0);
-
-  std::string appName = CCompileInfo::GetAppName();
-  StringUtils::ToLower(appName);
-  std::string className = CCompileInfo::GetPackage();
-
-  std::string xbmcHome = CJNISystem::getProperty("xbmc.home", "");
-  if (xbmcHome.empty())
-  {
-    std::string cacheDir = getCacheDir().getAbsolutePath();
-    setenv("KODI_BIN_HOME", (cacheDir + "/apk/assets").c_str(), 0);
-    setenv("KODI_HOME", (cacheDir + "/apk/assets").c_str(), 0);
-  }
-  else
-  {
-    setenv("KODI_BIN_HOME", (xbmcHome + "/assets").c_str(), 0);
-    setenv("KODI_HOME", (xbmcHome + "/assets").c_str(), 0);
-  }
-
-  std::string externalDir = CJNISystem::getProperty("xbmc.data", "");
-  if (externalDir.empty())
-  {
-    CJNIFile androidPath = getExternalFilesDir("");
-    if (!androidPath)
-      androidPath = getDir(className.c_str(), 1);
-
-    if (androidPath)
-      externalDir = androidPath.getAbsolutePath();
-  }
-
-  if (!externalDir.empty())
-    setenv("HOME", externalDir.c_str(), 0);
-  else
-    setenv("HOME", getenv("KODI_TEMP"), 0);
-
-  std::string apkPath = getenv("XBMC_ANDROID_APK");
-  apkPath += "/assets/python2.7";
-  setenv("PYTHONHOME", apkPath.c_str(), 1);
-  setenv("PYTHONPATH", "", 1);
-  setenv("PYTHONOPTIMIZE","", 1);
-  setenv("PYTHONNOUSERSITE", "1", 1);
-}
-
 std::string CXBMCApp::GetFilenameFromIntent(const CJNIIntent &intent)
 {
     std::string ret;
@@ -1442,31 +1254,30 @@ void CXBMCApp::surfaceChanged(CJNISurfaceHolder holder, int format, int width, i
 
 void CXBMCApp::surfaceCreated(CJNISurfaceHolder holder)
 {
+  CLog::Log(LOGDEBUG, "%s", __PRETTY_FUNCTION__);
   m_window = ANativeWindow_fromSurface(xbmc_jnienv(), holder.getSurface().get_raw());
   if (m_window == NULL)
   {
     android_printf(" => invalid ANativeWindow object");
     return;
   }
-  if(!m_firstrun)
-  {
-    XBMC_SetupDisplay();
-  }
+  CApplicationMessenger::GetInstance().PostMsg(TMSG_DISPLAY_SETUP);
 }
 
 void CXBMCApp::surfaceDestroyed(CJNISurfaceHolder holder)
 {
+  CLog::Log(LOGDEBUG, "%s", __PRETTY_FUNCTION__);
   // If we have exited XBMC, it no longer exists.
   if (!m_exiting)
   {
-    XBMC_DestroyDisplay();
+    CApplicationMessenger::GetInstance().PostMsg(TMSG_DISPLAY_CLEANUP);
     m_window = NULL;
   }
 }
 
 void CXBMCApp::onLayoutChange(int left, int top, int width, int height)
 {
-  CSingleLock lock(m_AppMutex);
+  CSingleLock lock(m_LayoutMutex);
 
   m_surface_rect.x1 = left;
   m_surface_rect.y1 = top;
@@ -1478,3 +1289,4 @@ void CXBMCApp::onLayoutChange(int left, int top, int width, int height)
   if (g_application.GetRenderGUI())
     CalculateGUIRatios();
 }
+

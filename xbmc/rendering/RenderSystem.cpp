@@ -19,6 +19,7 @@
  */
 
 #include "RenderSystem.h"
+#include "Application.h"
 #include "guilib/GUIImage.h"
 #include "guilib/GUILabelControl.h"
 #include "guilib/GUIFontManager.h"
@@ -85,6 +86,9 @@ bool CRenderSystemBase::SupportsStereo(RENDER_STEREO_MODE mode) const
 
 void CRenderSystemBase::ShowSplash(const std::string& message)
 {
+  if (!g_application.GetRenderGUI())
+    return;
+
   if (!g_advancedSettings.m_splashImage && !(m_splashImage || !message.empty()))
     return;
 

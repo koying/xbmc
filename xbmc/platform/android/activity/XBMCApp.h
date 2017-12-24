@@ -163,13 +163,14 @@ public:
   void onLostFocus() override;
 
   void Initialize();
-  void Deinitialize();
+  void Deinitialize(int status);
 
   static ANativeWindow* GetNativeWindow(int timeout);
   static int SetBuffersGeometry(int width, int height, int format);
   static int android_printf(const char *format, ...);
   
   void BringToFront();
+  void Minimize();
 
   static int GetBatteryLevel();
   bool EnableWakeLock(bool on);
@@ -186,12 +187,9 @@ public:
    * \param type optional type. Possible values are "", "files", "music", "videos", "pictures", "photos, "downloads"
    * \return true if external storage is available and a valid path has been stored in the path parameter
    */
-  static bool GetExternalStorage(std::string &path, const std::string &type = "");
-  static bool GetStorageUsage(const std::string &path, std::string &usage);
   int GetMaxSystemVolume();
   float GetSystemVolume();
   void SetSystemVolume(float percent);
-  void InitDirectories();
 
   void SetRefreshRate(float rate);
   void SetDisplayMode(int mode);
@@ -254,7 +252,7 @@ protected:
 
 private:
   static CXBMCApp* m_xbmcappinstance;
-  static CCriticalSection m_AppMutex;
+  static CCriticalSection m_LayoutMutex;
 
   std::unique_ptr<CJNIXBMCAudioManagerOnAudioFocusChangeListener> m_audioFocusListener;
   std::unique_ptr<jni::CJNIXBMCBroadcastReceiver> m_broadcastReceiver;
@@ -278,9 +276,8 @@ private:
   static bool m_hasReqVisible;
   static bool m_hasPIP;
   bool m_videosurfaceInUse;
-  bool m_firstrun;
+  bool m_firstActivityRun;
   bool m_exiting;
-  pthread_t m_thread;
   static CCriticalSection m_applicationsMutex;
   static std::vector<androidPackage> m_applications;
   static std::vector<CActivityResultEvent*> m_activityResultEvents;
@@ -296,8 +293,6 @@ private:
 
   void XBMC_Pause(bool pause);
   void XBMC_Stop();
-  bool XBMC_DestroyDisplay();
-  bool XBMC_SetupDisplay();
   static CRect m_droid2guiRatio;
 
   static uint32_t m_playback_state;

@@ -94,6 +94,7 @@ set(package_files strings.xml
                   src/content/XBMCMediaContentProvider.java
                   src/content/XBMCContentProvider.java
                   src/content/XBMCYTDLContentProvider.java
+                  src/Service.java
                   )
 foreach(file IN LISTS package_files)
   configure_file(${CMAKE_SOURCE_DIR}/tools/android/packaging/xbmc/${file}.in

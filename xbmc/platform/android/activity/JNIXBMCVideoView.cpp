@@ -21,9 +21,8 @@
 #include "JNIXBMCVideoView.h"
 
 #include <androidjni/jutils-details.hpp>
-#include <androidjni/Context.h>
 
-#include "platform/android/activity/XBMCApp.h"
+#include "platform/android/service/XBMCService.h"
 #include "utils/StringUtils.h"
 #include "utils/log.h"
 
@@ -72,7 +71,7 @@ CJNIXBMCVideoView* CJNIXBMCVideoView::createVideoView(CJNISurfaceHolderCallback*
 {
   std::string signature = "()L" + s_className + ";";
 
-  CJNIXBMCVideoView* pvw = new CJNIXBMCVideoView(call_static_method<jhobject>(CXBMCApp::get()->getClassLoader().loadClass(GetDotClassName(s_className)),
+  CJNIXBMCVideoView* pvw = new CJNIXBMCVideoView(call_static_method<jhobject>(CXBMCService::get()->getClassLoader().loadClass(GetDotClassName(s_className)),
                                                                               "createVideoView", signature.c_str()));
   if (!*pvw)
   {
