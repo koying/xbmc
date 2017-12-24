@@ -24,6 +24,7 @@
 #include <androidjni/JNIThreading.h>
 
 #include "platform/android/activity/XBMCApp.h"
+#include "platform/android/service/XBMCService.h"
 #include "utils/log.h"
 
 bool CAndroidFeatures::HasNeon()

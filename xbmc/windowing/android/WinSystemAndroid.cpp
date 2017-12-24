@@ -244,7 +244,7 @@ void CWinSystemAndroid::UpdateResolutions()
 
 bool CWinSystemAndroid::Minimize()
 {
-  CXBMCApp::get()->moveTaskToBack(true);
+  CXBMCApp::get()->Minimize();
   return true;
 }
 

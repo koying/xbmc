@@ -163,6 +163,7 @@
 
 #ifdef TARGET_WINDOWS
 #include "win32util.h"
+#define __PRETTY_FUNCTION__ __FUNCTION__
 #endif
 
 #ifdef TARGET_DARWIN_OSX
@@ -195,6 +196,7 @@
 #include <androidjni/ApplicationInfo.h>
 #include <androidjni/System.h>
 #include "platform/android/activity/XBMCApp.h"
+#include "platform/android/service/XBMCService.h"
 #include "platform/android/activity/AndroidFeatures.h"
 #endif
 
@@ -256,6 +258,8 @@ CApplication::CApplication(void)
   , m_itemCurrentFile(new CFileItem)
   , m_threadID(0)
   , m_bInitializing(true)
+  , m_bGUIInitialized(false)
+  , m_bGUICreated(false)
   , m_bPlatformDirectories(true)
   , m_nextPlaylistItem(-1)
   , m_lastRenderTime(0)
@@ -521,11 +525,11 @@ bool CApplication::Create(const CAppParamParser &params)
         CJNIBuild::PRODUCT.c_str(), CJNIBuild::DEVICE.c_str(), CJNIBuild::BOARD.c_str(),
         CJNIBuild::MANUFACTURER.c_str(), CJNIBuild::BRAND.c_str(), CJNIBuild::MODEL.c_str(), CJNIBuild::HARDWARE.c_str());
   std::string extstorage;
-  bool extready = CXBMCApp::GetExternalStorage(extstorage);
+  bool extready = CXBMCService::GetExternalStorage(extstorage);
   CLog::Log(LOGNOTICE, "External storage path = %s; status = %s", extstorage.c_str(), extready ? "ok" : "nok");
   CLog::Log(LOGNOTICE, "System library paths = %s", CJNISystem::getProperty("java.library.path").c_str());
-  CLog::Log(LOGNOTICE, "App library path = %s", CXBMCApp::get()->getApplicationInfo().nativeLibraryDir.c_str());
-  CLog::Log(LOGNOTICE, "APK = %s", CXBMCApp::get()->getPackageResourcePath().c_str());
+  CLog::Log(LOGNOTICE, "App library path = %s", CXBMCService::get()->getApplicationInfo().nativeLibraryDir.c_str());
+  CLog::Log(LOGNOTICE, "APK = %s", CXBMCService::get()->getPackageResourcePath().c_str());
 #endif
 
 #if defined(__arm__) || defined(__aarch64__)
@@ -650,16 +654,20 @@ bool CApplication::Create(const CAppParamParser &params)
 
 bool CApplication::CreateGUI()
 {
-  m_frameMoveGuard.lock();
+  CLog::Log(LOGDEBUG, "%s", __PRETTY_FUNCTION__);
 
   m_renderGUI = true;
+
+  if (!m_ServiceManager->InitStageThree())
+  {
+    CLog::Log(LOGERROR, "Application - Init3 failed");
+  }
 
   if (!CServiceBroker::GetWinSystem().InitWindowSystem())
   {
     CLog::Log(LOGFATAL, "CApplication::Create: Unable to init windowing system");
     return false;
   }
-
 
   // Retrieve the matching resolution based on GUI settings
   bool sav_res = false;
@@ -690,7 +698,7 @@ bool CApplication::CreateGUI()
     CDisplaySettings::GetInstance().SetCurrentResolution(RES_DESKTOP);
     sav_res = true;
   }
-  if (!InitWindow())
+  if (!InitWindow(CDisplaySettings::GetInstance().GetCurrentResolution()))
   {
     return false;
   }
@@ -726,7 +734,85 @@ bool CApplication::CreateGUI()
             info.iHeight,
             info.strMode.c_str());
 
-  g_windowManager.Initialize();
+  std::string defaultSkin = std::static_pointer_cast<const CSettingString>(m_ServiceManager->GetSettings().GetSetting(CSettings::SETTING_LOOKANDFEEL_SKIN))->GetDefault();
+  if (!LoadSkin(m_ServiceManager->GetSettings().GetString(CSettings::SETTING_LOOKANDFEEL_SKIN)))
+  {
+    CLog::Log(LOGERROR, "Failed to load skin '%s'", m_ServiceManager->GetSettings().GetString(CSettings::SETTING_LOOKANDFEEL_SKIN).c_str());
+    if (!LoadSkin(defaultSkin))
+    {
+      CLog::Log(LOGFATAL, "Default skin '%s' could not be loaded! Terminating..", defaultSkin.c_str());
+      return false;
+    }
+  }
+  m_bGUICreated = true;
+
+  CLog::Log(LOGDEBUG, ">>> %s", __PRETTY_FUNCTION__);
+
+  return true;
+}
+
+bool CApplication::DestroyGUI()
+{
+  CLog::Log(LOGDEBUG, "%s", __PRETTY_FUNCTION__);
+
+  UnloadSkin();
+
+  CServiceBroker::GetRenderSystem().DestroyRenderSystem();
+  CServiceBroker::GetWinSystem().DestroyWindow();
+  CServiceBroker::GetWinSystem().DestroyWindowSystem();
+
+  m_bGUICreated = false;
+
+  return true;
+}
+
+bool CApplication::StartGUI()
+{
+  CLog::Log(LOGDEBUG, "%s", __PRETTY_FUNCTION__);
+  bool uiInitializationFinished = true;
+
+  // initialize splash window after splash screen disappears
+  // because we need a real window in the background which gets
+  // rendered while we load the main window or enter the master lock key
+  g_windowManager.ActivateWindow(WINDOW_SPLASH);
+
+  if (m_ServiceManager->GetSettings().GetBool(CSettings::SETTING_MASTERLOCK_STARTUPLOCK) &&
+      m_ServiceManager->GetProfileManager().GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE &&
+     !m_ServiceManager->GetProfileManager().GetMasterProfile().getLockCode().empty())
+  {
+     g_passwordManager.CheckStartUpLock();
+  }
+
+  // check if we should use the login screen
+  if (m_ServiceManager->GetProfileManager().UsingLoginScreen())
+  {
+    // the login screen still needs to perform additional initialization
+    uiInitializationFinished = false;
+
+    g_windowManager.ActivateWindow(WINDOW_LOGIN_SCREEN);
+  }
+  else
+  {
+    // activate the configured start window
+    int firstWindow = g_SkinInfo->GetFirstWindow();
+    g_windowManager.ActivateWindow(firstWindow);
+
+    if (g_windowManager.IsWindowActive(WINDOW_STARTUP_ANIM))
+    {
+      CLog::Log(LOGWARNING, "CApplication::Initialize - startup.xml taints init process");
+    }
+
+    // the startup window is considered part of the initialization as it most likely switches to the final window
+    uiInitializationFinished = firstWindow != WINDOW_STARTUP_ANIM;
+
+    CStereoscopicsManager::GetInstance().Initialize();
+  }
+  // if the user interfaces has been fully initialized let everyone know
+  if (uiInitializationFinished)
+  {
+    CGUIMessage msg(GUI_MSG_NOTIFY_ALL, 0, 0, GUI_MSG_UI_READY);
+    g_windowManager.SendThreadMessage(msg);
+  }
 
   return true;
 }
@@ -752,14 +838,6 @@ bool CApplication::InitWindow(RESOLUTION res)
   // set GUI res and force the clear of the screen
   g_graphicsContext.SetVideoResolution(res, false);
   return true;
-}
-
-bool CApplication::DestroyWindow()
-{
-  bool ret = CServiceBroker::GetWinSystem().DestroyWindow();
-  std::unique_ptr<CWinSystemBase> winSystem;
-  m_ServiceManager->SetWinSystem(std::move(winSystem));
-  return ret;
 }
 
 bool CApplication::InitDirectoriesLinux()
@@ -1018,6 +1096,8 @@ void CApplication::CreateUserDirs() const
 
 bool CApplication::Initialize()
 {
+  m_frameMoveGuard.lock();
+
 #if defined(HAS_DVD_DRIVE) && !defined(TARGET_WINDOWS) // somehow this throws an "unresolved external symbol" on win32
   // turn off cdio logging
   cdio_loglevel_default = CDIO_LOG_ERROR;
@@ -1070,39 +1150,40 @@ bool CApplication::Initialize()
 
   // Init DPMS, before creating the corresponding setting control.
   m_dpms.reset(new DPMSSupport());
-  bool uiInitializationFinished = true;
+  bool uiInitializationFinished = false;
+
+  std::vector<std::string> incompatibleAddons;
+  event.Reset();
+  std::atomic<bool> isMigratingAddons(false);
+  CJobManager::GetInstance().Submit([&event, &incompatibleAddons, &isMigratingAddons]() {
+      incompatibleAddons = CAddonSystemSettings::GetInstance().MigrateAddons([&isMigratingAddons]() {
+        isMigratingAddons = true;
+      });
+      event.Set();
+    }, CJob::PRIORITY_DEDICATED);
+  localizedStr = g_localizeStrings.Get(24151);
+  iDots = 1;
+  while (!event.WaitMSec(1000))
+  {
+    if (isMigratingAddons)
+      CServiceBroker::GetRenderSystem().ShowSplash(std::string(iDots, ' ') + localizedStr + std::string(iDots, '.'));
+    if (iDots == 3)
+      iDots = 1;
+    else
+      ++iDots;
+  }
+  CServiceBroker::GetRenderSystem().ShowSplash("");
+  m_incompatibleAddons = incompatibleAddons;
+
+  g_windowManager.CreateWindows();
+
   if (g_windowManager.Initialized())
   {
+    CLog::Log(LOGDEBUG, "CApplication: Start with GUI");
+
     m_ServiceManager->GetSettings().GetSetting(CSettings::SETTING_POWERMANAGEMENT_DISPLAYSOFF)->SetRequirementsMet(m_dpms->IsSupported());
 
-    g_windowManager.CreateWindows();
-
-    m_confirmSkinChange = false;
-
-    std::vector<std::string> incompatibleAddons;
-    event.Reset();
-    std::atomic<bool> isMigratingAddons(false);
-    CJobManager::GetInstance().Submit([&event, &incompatibleAddons, &isMigratingAddons]() {
-        incompatibleAddons = CAddonSystemSettings::GetInstance().MigrateAddons([&isMigratingAddons]() {
-          isMigratingAddons = true;
-        });
-        event.Set();
-      }, CJob::PRIORITY_DEDICATED);
-    localizedStr = g_localizeStrings.Get(24151);
-    iDots = 1;
-    while (!event.WaitMSec(1000))
-    {
-      if (isMigratingAddons)
-        CServiceBroker::GetRenderSystem().ShowSplash(std::string(iDots, ' ') + localizedStr + std::string(iDots, '.'));
-      if (iDots == 3)
-        iDots = 1;
-      else
-        ++iDots;
-    }
-    CServiceBroker::GetRenderSystem().ShowSplash("");
-    m_incompatibleAddons = incompatibleAddons;
     m_confirmSkinChange = true;
-
     std::string defaultSkin = std::static_pointer_cast<const CSettingString>(m_ServiceManager->GetSettings().GetSetting(CSettings::SETTING_LOOKANDFEEL_SKIN))->GetDefault();
     if (!LoadSkin(m_ServiceManager->GetSettings().GetString(CSettings::SETTING_LOOKANDFEEL_SKIN)))
     {
@@ -1126,6 +1207,7 @@ bool CApplication::Initialize()
        g_passwordManager.CheckStartUpLock();
     }
 
+    uiInitializationFinished = true;
     // check if we should use the login screen
     if (m_ServiceManager->GetProfileManager().UsingLoginScreen())
     {
@@ -1162,6 +1244,8 @@ bool CApplication::Initialize()
   }
   else //No GUI Created
   {
+    CLog::Log(LOGDEBUG, "CApplication: No GUI");
+
     CJSONRPC::Initialize();
     CServiceBroker::GetServiceAddons().StartBeforeLogin();
   }
@@ -1200,6 +1284,7 @@ bool CApplication::Initialize()
     CGUIMessage msg(GUI_MSG_NOTIFY_ALL, 0, 0, GUI_MSG_UI_READY);
     g_windowManager.SendThreadMessage(msg);
   }
+  m_bInitializing = false;
 
   return true;
 }
@@ -1459,7 +1544,7 @@ bool CApplication::OnSettingsSaving() const
 
 void CApplication::ReloadSkin(bool confirm/*=false*/)
 {
-  if (!g_SkinInfo || m_bInitializing)
+  if (!g_SkinInfo || !m_bGUIInitialized)
     return; // Don't allow reload before skin is loaded by system
 
   std::string oldSkin = g_SkinInfo->ID();
@@ -2376,15 +2461,46 @@ void CApplication::OnApplicationMessage(ThreadMessage* pMsg)
   break;
 
 #ifdef TARGET_ANDROID
+  case TMSG_DISPLAY_INIT:
+    if (m_renderGUI)
+      break;
+    CreateGUI();
+    if (!g_application.IsGUIInitialized())
+      StartGUI();
+
+    if (g_advancedSettings.m_videoUseDroidProjectionCapture)
+      CXBMCApp::get()->startProjection();
+
+    CXBMCApp::get()->Initialize();
+    break;
+
   case TMSG_DISPLAY_SETUP:
+    if (m_renderGUI)
+      break;
+
+    if (!IsGUICreated())
+      CreateGUI();
+
     // We might come from a refresh rate switch destroying the native window; use the context resolution
-    *static_cast<bool*>(pMsg->lpVoid) = InitWindow(g_graphicsContext.GetVideoResolution());
+    InitWindow(g_graphicsContext.GetVideoResolution());
     SetRenderGUI(true);
     break;
 
-  case TMSG_DISPLAY_DESTROY:
-    *static_cast<bool*>(pMsg->lpVoid) = CServiceBroker::GetWinSystem().DestroyWindow();
+  case TMSG_DISPLAY_CLEANUP:
+    if (IsGUICreated())
+      CServiceBroker::GetWinSystem().DestroyWindow();
     SetRenderGUI(false);
+    break;
+
+  case TMSG_DISPLAY_DESTROY:
+    if (IsGUICreated())
+    {
+      if (m_ServiceManager)
+        m_ServiceManager->DeinitStageThree();
+
+      DestroyGUI();
+      SetRenderGUI(false);
+    }
     break;
 #endif
 
@@ -2633,11 +2749,11 @@ void CApplication::FrameMove(bool processEvents, bool processGUI)
       }
     }
 
-    HandleWinEvents();
-    CServiceBroker::GetInputManager().Process(g_windowManager.GetActiveWindowOrDialog(), frameTime);
-
     if (processGUI && m_renderGUI)
     {
+      HandleWinEvents();
+      CServiceBroker::GetInputManager().Process(g_windowManager.GetActiveWindowOrDialog(), frameTime);
+
       m_pInertialScrollingHandler->ProcessInertialScroll(frameTime);
       m_appPlayer.GetSeekHandler().FrameMove();
     }
@@ -2694,7 +2810,8 @@ void CApplication::FrameMove(bool processEvents, bool processGUI)
   m_appPlayer.FrameMove();
 
   // this will go away when render systems gets its own thread
-  CServiceBroker::GetWinSystem().DriveRenderLoop();
+  if (m_renderGUI)
+    CServiceBroker::GetWinSystem().DriveRenderLoop();
 }
 
 
@@ -2719,9 +2836,7 @@ bool CApplication::Cleanup()
     m_globalScreensaverInhibitor.Release();
     m_screensaverInhibitor.Release();
 
-    CServiceBroker::GetRenderSystem().DestroyRenderSystem();
-    CServiceBroker::GetWinSystem().DestroyWindow();
-    CServiceBroker::GetWinSystem().DestroyWindowSystem();
+    DestroyGUI();
     g_windowManager.DestroyWindows();
 
     CLog::Log(LOGNOTICE, "unload sections");
@@ -2822,15 +2937,19 @@ void CApplication::Stop(int exitCode)
     CLog::Log(LOGNOTICE, "stop all");
 
     // cancel any jobs from the jobmanager
+    CLog::Log(LOGNOTICE, "CancelJobs");
     CJobManager::GetInstance().CancelJobs();
 
     // stop scanning before we kill the network and so on
+    CLog::Log(LOGNOTICE, "CMusicLibraryQueue:.CancelAllJobs");
     if (CMusicLibraryQueue::GetInstance().IsRunning())
       CMusicLibraryQueue::GetInstance().CancelAllJobs();
 
+    CLog::Log(LOGNOTICE, "CancelAllJobs");
     if (CVideoLibraryQueue::GetInstance().IsRunning())
       CVideoLibraryQueue::GetInstance().CancelAllJobs();
 
+    CLog::Log(LOGNOTICE, "messenger cleanup");
     CApplicationMessenger::GetInstance().Cleanup();
 
     CLog::Log(LOGNOTICE, "stop player");
@@ -3882,7 +4001,7 @@ bool CApplication::OnMessage(CGUIMessage& message)
         // show info dialog about moved configuration files if needed
         ShowAppMigrationMessage();
 
-        m_bInitializing = false;
+        m_bGUIInitialized = true;
       }
       else if (message.GetParam1() == GUI_MSG_UPDATE_ITEM && message.GetItem())
       {
@@ -4252,7 +4371,8 @@ void CApplication::ProcessSlow()
 
 #ifdef TARGET_ANDROID
   // Pass the slow loop to droid
-  CXBMCApp::get()->ProcessSlow();
+  if (CXBMCApp::get())
+    CXBMCApp::get()->ProcessSlow();
 #endif
 
   // check for any idle curl connections

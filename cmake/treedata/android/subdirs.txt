@@ -14,4 +14,5 @@ xbmc/windowing/android                  windowing/android
 xbmc/platform/posix                     posix
 xbmc/platform/android                   android
 xbmc/platform/android/activity          android_activity
+xbmc/platform/android/service           android_service
 xbmc/platform/android/bionic_supplement android_bionicsupplement

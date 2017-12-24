@@ -37,6 +37,7 @@
 #include "platform/android/activity/JNIXBMCBroadcastReceiver.h"
 #include "utils/StringUtils.h"
 #include "activity/XBMCApp.h"
+#include "service/XBMCService.h"
 
 extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved)
 {
@@ -48,6 +49,7 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved)
 
   std::string pkgRoot = CCompileInfo::GetClass();
   
+  std::string serviceClass = pkgRoot + "/Service";
   std::string mainClass = pkgRoot + "/Main";
   std::string bcReceiver = pkgRoot + "/XBMCBroadcastReceiver";
   std::string settingsObserver = pkgRoot + "/XBMCSettingsContentObserver";
@@ -64,6 +66,16 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved)
   jni::CJNIXBMCFile::RegisterNatives(env);
   jni::CJNIXBMCInputDeviceListener::RegisterNatives(env);
   jni::CJNIXBMCBroadcastReceiver::RegisterNatives(env);
+
+  jclass cKASvc = env->FindClass(serviceClass.c_str());
+  if(cKASvc)
+  {
+    JNINativeMethod methods[] =
+    {
+      {"_launchApplication", "()Z", (void*)&CXBMCService::_launchApplication},
+    };
+    env->RegisterNatives(cKASvc, methods, sizeof(methods)/sizeof(methods[0]));
+  }
 
   jclass cMain = env->FindClass(mainClass.c_str());
   if(cMain)

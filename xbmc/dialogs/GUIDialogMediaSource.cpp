@@ -43,7 +43,7 @@
 #include "pvr/recordings/PVRRecordingsPath.h"
 
 #if defined(TARGET_ANDROID)
-#include "platform/android/activity/XBMCApp.h"
+#include "platform/android/service/XBMCService.h"
 #include "filesystem/File.h"
 #endif
 
@@ -243,7 +243,7 @@ void CGUIDialogMediaSource::OnPathBrowse(int item)
 #if defined(TARGET_ANDROID)
     // add the default android music directory
     std::string path;
-    if (CXBMCApp::GetExternalStorage(path, "music") && !path.empty() && CDirectory::Exists(path))
+    if (CXBMCService::GetExternalStorage(path, "music") && !path.empty() && CDirectory::Exists(path))
     {
       share1.strPath = path;
       share1.strName = g_localizeStrings.Get(20240);
@@ -297,7 +297,7 @@ void CGUIDialogMediaSource::OnPathBrowse(int item)
 #if defined(TARGET_ANDROID)
     // add the default android video directory
     std::string path;
-    if (CXBMCApp::GetExternalStorage(path, "videos") && !path.empty() && CFile::Exists(path))
+    if (CXBMCService::GetExternalStorage(path, "videos") && !path.empty() && CFile::Exists(path))
     {
       share1.strPath = path;
       share1.strName = g_localizeStrings.Get(20241);
@@ -343,7 +343,7 @@ void CGUIDialogMediaSource::OnPathBrowse(int item)
 #if defined(TARGET_ANDROID)
     // add the default android music directory
     std::string path;
-    if (CXBMCApp::GetExternalStorage(path, "pictures") && !path.empty() && CFile::Exists(path))
+    if (CXBMCService::GetExternalStorage(path, "pictures") && !path.empty() && CFile::Exists(path))
     {
       share1.strPath = path;
       share1.strName = g_localizeStrings.Get(20242);
@@ -352,7 +352,7 @@ void CGUIDialogMediaSource::OnPathBrowse(int item)
     }
 
     path.clear();
-    if (CXBMCApp::GetExternalStorage(path, "photos") && !path.empty() && CFile::Exists(path))
+    if (CXBMCService::GetExternalStorage(path, "photos") && !path.empty() && CFile::Exists(path))
     {
       share1.strPath = path;
       share1.strName = g_localizeStrings.Get(20243);

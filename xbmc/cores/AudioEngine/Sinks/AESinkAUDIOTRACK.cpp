@@ -28,6 +28,7 @@
 #include "cores/AudioEngine/Utils/AEUtil.h"
 #include "cores/AudioEngine/AESinkFactory.h"
 #include "platform/android/activity/XBMCApp.h"
+#include "platform/android/service/XBMCService.h"
 #include "settings/Settings.h"
 #include "utils/log.h"
 #include "utils/StringUtils.h"

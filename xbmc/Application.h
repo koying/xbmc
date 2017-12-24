@@ -144,10 +144,13 @@ public:
   bool Cleanup() override;
 
   bool IsInitialized() { return !m_bInitializing; }
+  bool IsGUICreated() { return m_bGUICreated; }
+  bool IsGUIInitialized() { return m_bGUIInitialized; }
 
   bool CreateGUI();
+  bool DestroyGUI();
+  bool StartGUI();
   bool InitWindow(RESOLUTION res = RES_INVALID);
-  bool DestroyWindow();
   void StartServices();
   void StopServices();
 
@@ -449,6 +452,8 @@ protected:
   std::string m_prevMedia;
   ThreadIdentifier m_threadID;       // application thread ID.  Used in applicationMessenger to know where we are firing a thread with delay from.
   bool m_bInitializing;
+  bool m_bGUIInitialized;
+  bool m_bGUICreated;
   bool m_bPlatformDirectories;
 
   int m_nextPlaylistItem;
