@@ -6168,6 +6168,8 @@ xbmc/cores/VideoPlayer/AudioSinkAE.h
 xbmc/input/Action.cpp
 xbmc/input/Action.h
 xbmc/input/ActionIDs.h
+xbmc/network/httprequesthandler/HTTPLogHandler.cpp
+xbmc/network/httprequesthandler/HTTPLogHandler.h
 xbmc/platform/android/activity/CMakeLists.txt
 xbmc/platform/android/activity/android_main.cpp
 xbmc/platform/android/activity/AndroidExtra.h
