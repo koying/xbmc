@@ -64,6 +64,7 @@
 #include "network/httprequesthandler/HTTPImageHandler.h"
 #include "network/httprequesthandler/HTTPImageTransformationHandler.h"
 #include "network/httprequesthandler/HTTPVfsHandler.h"
+#include "network/httprequesthandler/HTTPLogHandler.h"
 #include "network/httprequesthandler/HTTPJsonRpcHandler.h"
 #ifdef HAS_WEB_INTERFACE
 #ifdef HAS_PYTHON
@@ -94,6 +95,7 @@ CNetworkServices::CNetworkServices()
   m_httpImageHandler(*new CHTTPImageHandler),
   m_httpImageTransformationHandler(*new CHTTPImageTransformationHandler),
   m_httpVfsHandler(*new CHTTPVfsHandler),
+  m_httpLogHandler(*new CHTTPLogHandler),
   m_httpJsonRpcHandler(*new CHTTPJsonRpcHandler)
 #ifdef HAS_WEB_INTERFACE
 #ifdef HAS_PYTHON
@@ -109,6 +111,7 @@ CNetworkServices::CNetworkServices()
   m_webserver.RegisterRequestHandler(&m_httpImageHandler);
   m_webserver.RegisterRequestHandler(&m_httpImageTransformationHandler);
   m_webserver.RegisterRequestHandler(&m_httpVfsHandler);
+  m_webserver.RegisterRequestHandler(&m_httpLogHandler);
   m_webserver.RegisterRequestHandler(&m_httpJsonRpcHandler);
 #ifdef HAS_WEB_INTERFACE
 #ifdef HAS_PYTHON
@@ -129,6 +132,8 @@ CNetworkServices::~CNetworkServices()
   delete &m_httpImageTransformationHandler;
   m_webserver.UnregisterRequestHandler(&m_httpVfsHandler);
   delete &m_httpVfsHandler;
+  m_webserver.UnregisterRequestHandler(&m_httpLogHandler);
+  delete &m_httpLogHandler;
   m_webserver.UnregisterRequestHandler(&m_httpJsonRpcHandler);
   delete &m_httpJsonRpcHandler;
   CJSONRPC::Cleanup();
