@@ -5,6 +5,7 @@ if(MICROHTTPD_FOUND)
               HTTPJsonRpcHandler.cpp
               HTTPRequestHandlerUtils.cpp
               HTTPVfsHandler.cpp
+              HTTPLogHandler.cpp
               HTTPWebinterfaceAddonsHandler.cpp
               HTTPWebinterfaceHandler.cpp
               IHTTPRequestHandler.cpp)
@@ -19,6 +20,7 @@ if(MICROHTTPD_FOUND)
               HTTPJsonRpcHandler.h
               HTTPRequestHandlerUtils.h
               HTTPVfsHandler.h
+              HTTPLogHandler.h
               HTTPWebinterfaceAddonsHandler.h
               HTTPWebinterfaceHandler.h
               IHTTPRequestHandler.h)
