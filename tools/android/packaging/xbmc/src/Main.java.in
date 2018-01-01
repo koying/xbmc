@@ -185,6 +185,14 @@ public class Main extends NativeActivity implements Choreographer.FrameCallback
     NotificationManager nMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
     nMgr.cancelAll();
 
+    // Delayed Intent
+    if (getIntent().getData() != null)
+    {
+      mNewIntent = new Intent(getIntent());
+      mNewIntentDelay = 5000;
+      getIntent().setData(null);
+    }
+
     if (getPackageManager().hasSystemFeature("android.software.leanback"))
     {
       if (Build.VERSION.SDK_INT >= VERSION_CODES.O)
