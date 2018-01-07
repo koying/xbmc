@@ -22,6 +22,8 @@ endif()
 # Configure files into packaging environment.
 configure_file(${CMAKE_SOURCE_DIR}/tools/android/packaging/Makefile.in
                ${CMAKE_BINARY_DIR}/tools/android/packaging/Makefile @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/tools/android/packaging/settings.gradle.in
+               ${CMAKE_BINARY_DIR}/tools/android/packaging/settings.gradle @ONLY)
 configure_file(${CMAKE_SOURCE_DIR}/tools/android/packaging/apksign
                ${CMAKE_BINARY_DIR}/tools/android/packaging/apksign COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/tools/android/packaging/make_symbols.sh
@@ -30,8 +32,6 @@ configure_file(${CMAKE_SOURCE_DIR}/tools/android/packaging/build.gradle
                ${CMAKE_BINARY_DIR}/tools/android/packaging/build.gradle COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/tools/android/packaging/gradlew
                ${CMAKE_BINARY_DIR}/tools/android/packaging/gradlew COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/tools/android/packaging/settings.gradle
-               ${CMAKE_BINARY_DIR}/tools/android/packaging/settings.gradle COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/tools/android/packaging/gradle/wrapper/gradle-wrapper.jar
                ${CMAKE_BINARY_DIR}/tools/android/packaging/gradle/wrapper/gradle-wrapper.jar COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/tools/android/packaging/gradle/wrapper/gradle-wrapper.properties
