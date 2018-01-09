@@ -26,6 +26,7 @@ import android.os.Handler;
 import android.widget.RelativeLayout;
 
 import @APP_PACKAGE@.channels.util.TvUtil;
+import @APP_PACKAGE@.interfaces.XBMCInputDeviceListener;
 
 public class Main extends NativeActivity implements Choreographer.FrameCallback
 {
@@ -64,9 +65,9 @@ public class Main extends NativeActivity implements Choreographer.FrameCallback
   native void _onScreenshotAvailable(Image img);
 
   native void _onVisibleBehindCanceled();
-  
+
   native void _onMultiWindowModeChanged(boolean isInMultiWindowMode);
-  
+
   native void _onPictureInPictureModeChanged(boolean isInPictureInPictureMode);
 
   private Runnable leanbackUpdateRunnable = new Runnable()
@@ -272,7 +273,7 @@ public class Main extends NativeActivity implements Choreographer.FrameCallback
           catch (UnsatisfiedLinkError e)
           {
             Log.e("Main", "Native not registered");
-          } 
+          }
           finally
           {
             mNewIntent = null;
