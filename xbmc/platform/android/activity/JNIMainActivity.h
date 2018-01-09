@@ -27,7 +27,7 @@
 class CJNIMainActivity : public CJNIActivity
 {
 public:
-  explicit CJNIMainActivity(const ANativeActivity *nativeActivity);
+  explicit CJNIMainActivity(const jobject& clazz);
   ~CJNIMainActivity();
 
   static CJNIMainActivity* GetAppInstance() { return m_appInstance; }
@@ -43,14 +43,14 @@ public:
   static void _onPictureInPictureModeChanged(JNIEnv *env, jobject context, jboolean isInPictureInPictureMode);
 
   static void _callNative(JNIEnv *env, jobject context, jlong funcAddr, jlong variantAddr);
-  static void runNativeOnUiThread(void (*callback)(CVariant *), CVariant *variant);
-  static void registerMediaButtonEventReceiver();
-  static void unregisterMediaButtonEventReceiver();
+  void runNativeOnUiThread(void (*callback)(CVariant *), CVariant *variant);
+  void registerMediaButtonEventReceiver();
+  void unregisterMediaButtonEventReceiver();
 
-  static void takeScreenshot();
-  static void startProjection();
-  static void startCapture(int width, int height);
-  static void stopCapture();
+  void takeScreenshot();
+  void startProjection();
+  void startCapture(int width, int height);
+  void stopCapture();
 
 private:
   static CJNIMainActivity *m_appInstance;
