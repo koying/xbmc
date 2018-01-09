@@ -51,7 +51,7 @@ static float currentRefreshRate()
   if (s_hasModeApi)
     return s_res_cur_displayMode.fRefreshRate;
 
-  CJNIWindow window = CXBMCApp::getWindow();
+  CJNIWindow window = CXBMCApp::get()->getWindow();
   if (window)
   {
     float preferredRate = window.getAttributes().getpreferredRefreshRate();
@@ -83,7 +83,7 @@ static void fetchDisplayModes()
   s_hasModeApi = false;
   s_res_displayModes.clear();
 
-  CJNIDisplay display = CXBMCApp::getWindow().getDecorView().getDisplay();
+  CJNIDisplay display = CXBMCApp::get()->getWindow().getDecorView().getDisplay();
 
   if (display)
   {
@@ -248,11 +248,11 @@ bool CAndroidUtils::SetNativeResolution(const RESOLUTION_INFO &res)
 
   if (s_hasModeApi)
   {
-    CXBMCApp::SetDisplayMode(atoi(res.strId.c_str()));
+    CXBMCApp::get()->SetDisplayMode(atoi(res.strId.c_str()));
     s_res_cur_displayMode = res;
   }
   else if (std::abs(currentRefreshRate() - res.fRefreshRate) > 0.0001)
-    CXBMCApp::SetRefreshRate(res.fRefreshRate);
+    CXBMCApp::get()->SetRefreshRate(res.fRefreshRate);
   CXBMCApp::SetBuffersGeometry(res.iWidth, res.iHeight, 0);
   CXBMCApp::CalculateGUIRatios();
 
@@ -283,7 +283,7 @@ bool CAndroidUtils::ProbeResolutions(std::vector<RESOLUTION_INFO> &resolutions)
   if (ret && cur_res.iWidth > 1 && cur_res.iHeight > 1)
   {
     std::vector<float> refreshRates;
-    CJNIWindow window = CXBMCApp::getWindow();
+    CJNIWindow window = CXBMCApp::get()->getWindow();
     if (window)
     {
       CJNIView view = window.getDecorView();

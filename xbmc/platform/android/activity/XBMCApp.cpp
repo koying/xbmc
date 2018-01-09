@@ -129,8 +129,6 @@ ANativeWindow* CXBMCApp::m_window = NULL;
 int CXBMCApp::m_batteryLevel = 0;
 bool CXBMCApp::m_hasFocus = false;
 bool CXBMCApp::m_headsetPlugged = false;
-IInputDeviceCallbacks* CXBMCApp::m_inputDeviceCallbacks = nullptr;
-IInputDeviceEventHandler* CXBMCApp::m_inputDeviceEventHandler = nullptr;
 bool CXBMCApp::m_hasReqVisible = false;
 bool CXBMCApp::m_hasPIP = false;
 CCriticalSection CXBMCApp::m_applicationsMutex;
@@ -150,10 +148,14 @@ uint32_t CXBMCApp::m_playback_state = PLAYBACK_STATE_STOPPED;
 CRect CXBMCApp::m_surface_rect;
 
 CXBMCApp::CXBMCApp(ANativeActivity* nativeActivity)
-  : CJNIMainActivity(nativeActivity)
-  , CJNIBroadcastReceiver(CJNIContext::getPackageName() + ".XBMCBroadcastReceiver")
+  : CJNIBase()
+  , CJNIMainActivity(nativeActivity->clazz)
+  , CJNIBroadcastReceiver(std::string(CCompileInfo::GetPackage()) + "/XBMCBroadcastReceiver")
   , CJNIXBMCInputDeviceListener()
   , m_videosurfaceInUse(false)
+  , m_inputDeviceCallbacks(nullptr)
+  , m_inputDeviceEventHandler(nullptr)
+
 {
   m_xbmcappinstance = this;
   m_activity = nativeActivity;
@@ -163,6 +165,7 @@ CXBMCApp::CXBMCApp(ANativeActivity* nativeActivity)
     exit(1);
     return;
   }
+  m_audioFocusListener.reset(new CJNIXBMCAudioManagerOnAudioFocusChangeListener());
   m_mainView.reset(new CJNIXBMCMainView(this));
   m_firstrun = true;
   m_exiting = false;
@@ -392,7 +395,7 @@ bool CXBMCApp::AcquireAudioFocus()
   CJNIAudioManager audioManager(getSystemService("audio"));
 
   // Request audio focus for playback
-  int result = audioManager.requestAudioFocus(m_audioFocusListener,
+  int result = audioManager.requestAudioFocus(*m_audioFocusListener,
                                               // Use the music stream.
                                               CJNIAudioManager::STREAM_MUSIC,
                                               // Request permanent focus.
@@ -414,7 +417,7 @@ bool CXBMCApp::ReleaseAudioFocus()
   CJNIAudioManager audioManager(getSystemService("audio"));
 
   // Release audio focus after playback
-  int result = audioManager.abandonAudioFocus(m_audioFocusListener);
+  int result = audioManager.abandonAudioFocus(*m_audioFocusListener);
   if (result != CJNIAudioManager::AUDIOFOCUS_REQUEST_GRANTED)
   {
     CXBMCApp::android_printf("Audio Focus abandon failed");
@@ -473,7 +476,7 @@ void CXBMCApp::run()
   m_exiting=true;
 
   // Pass the return code to Java
-  set_field(m_context, "mExitCode", status);
+  set_field(m_object, "mExitCode", status);
 
   // If we are have not been force by Android to exit, notify its finish routine.
   // This will cause android to run through its teardown events, it calls:
@@ -520,7 +523,7 @@ void CXBMCApp::SetRefreshRateCallback(CVariant* rateVariant)
   float rate = rateVariant->asFloat();
   delete rateVariant;
 
-  CJNIWindow window = getWindow();
+  CJNIWindow window = CXBMCApp::get()->getWindow();
   if (window)
   {
     CJNIWindowManagerLayoutParams params = window.getAttributes();
@@ -538,7 +541,7 @@ void CXBMCApp::SetDisplayModeCallback(CVariant* modeVariant)
   int mode = modeVariant->asFloat();
   delete modeVariant;
 
-  CJNIWindow window = getWindow();
+  CJNIWindow window = CXBMCApp::get()->getWindow();
   if (window)
   {
     CJNIWindowManagerLayoutParams params = window.getAttributes();
@@ -781,7 +784,7 @@ std::vector<androidPackage> CXBMCApp::GetApplications()
 
 bool CXBMCApp::HasLaunchIntent(const std::string &package)
 {
-  return GetPackageManager().getLaunchIntentForPackage(package) != NULL;
+  return (GetPackageManager().getLaunchIntentForPackage(package) != NULL);
 }
 
 // Note intent, dataType, dataURI all default to ""

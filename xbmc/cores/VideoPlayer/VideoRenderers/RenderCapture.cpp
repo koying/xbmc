@@ -76,7 +76,7 @@ CRenderCaptureDroid::CRenderCaptureDroid()
 CRenderCaptureDroid::~CRenderCaptureDroid()
 {
   if (g_advancedSettings.m_videoUseDroidProjectionCapture)
-    CXBMCApp::StopCapture();
+    CXBMCApp::get()->StopCapture();
   delete[] m_pixels;
 }
 
@@ -98,7 +98,7 @@ void CRenderCaptureDroid::BeginRender()
   if (g_advancedSettings.m_videoUseDroidProjectionCapture)
   {
     m_asyncSupported = true;
-    CXBMCApp::startCapture(m_width, m_height);
+    CXBMCApp::get()->startCapture(m_width, m_height);
   }
 }
 
@@ -125,7 +125,7 @@ void CRenderCaptureDroid::ReadOut()
   if (g_advancedSettings.m_videoUseDroidProjectionCapture)
   {
     jni::CJNIImage image;
-    if (CXBMCApp::GetCapture(image))
+    if (CXBMCApp::get()->GetCapture(image))
     {
       int iWidth = image.getWidth();
       int iHeight = image.getHeight();

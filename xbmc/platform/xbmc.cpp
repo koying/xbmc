@@ -85,7 +85,7 @@ extern "C" int XBMC_Run(bool renderGUI, const CAppParamParser &params)
 
 #if defined(TARGET_ANDROID)
   if (g_advancedSettings.m_videoUseDroidProjectionCapture)
-    CXBMCApp::startProjection();
+    CXBMCApp::get()->startProjection();
 #endif
 
   try
