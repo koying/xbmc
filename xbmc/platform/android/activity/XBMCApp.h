@@ -167,13 +167,13 @@ public:
   static int android_printf(const char *format, ...);
   
   static int GetBatteryLevel();
-  static bool EnableWakeLock(bool on);
+  bool EnableWakeLock(bool on);
   static bool HasFocus() { return m_hasFocus; }
   static bool IsHeadsetPlugged();
   static bool IsHDMIPlugged();
 
-  static bool StartActivity(const std::string &package, const std::string &intent = std::string(), const std::string &dataType = std::string(), const std::string &dataURI = std::string());
-  static std::vector <androidPackage> GetApplications();
+  bool StartActivity(const std::string &package, const std::string &intent = std::string(), const std::string &dataType = std::string(), const std::string &dataURI = std::string());
+  std::vector <androidPackage> GetApplications();
 
   /*!
    * \brief If external storage is available, it returns the path for the external storage (for the specified type)
@@ -183,24 +183,24 @@ public:
    */
   static bool GetExternalStorage(std::string &path, const std::string &type = "");
   static bool GetStorageUsage(const std::string &path, std::string &usage);
-  static int GetMaxSystemVolume();
-  static float GetSystemVolume();
-  static void SetSystemVolume(float percent);
-  static void InitDirectories();
+  int GetMaxSystemVolume();
+  float GetSystemVolume();
+  void SetSystemVolume(float percent);
+  void InitDirectories();
 
-  static void SetRefreshRate(float rate);
-  static void SetDisplayMode(int mode);
-  static int GetDPI();
+  void SetRefreshRate(float rate);
+  void SetDisplayMode(int mode);
+  int GetDPI();
 
   static CRect GetSurfaceRect();
   static CRect MapRenderToDroid(const CRect& srcRect);
   static CPoint MapDroidToGui(const CPoint& src);
 
-  static int WaitForActivityResult(const CJNIIntent &intent, int requestCode, CJNIIntent& result);
-  static bool WaitForCapture(jni::CJNIImage& image);
-  static bool GetCapture(jni::CJNIImage& img);
-  static void TakeScreenshot();
-  static void StopCapture();
+  int WaitForActivityResult(const CJNIIntent &intent, int requestCode, CJNIIntent& result);
+  bool WaitForCapture(jni::CJNIImage& image);
+  bool GetCapture(jni::CJNIImage& img);
+  void TakeScreenshot();
+  void StopCapture();
 
   // Playback callbacks
   void OnPlayBackStarted();
@@ -212,14 +212,14 @@ public:
   void UpdateSessionState();
 
   // input device methods
-  static void RegisterInputDeviceCallbacks(IInputDeviceCallbacks* handler);
-  static void UnregisterInputDeviceCallbacks();
-  static const CJNIViewInputDevice GetInputDevice(int deviceId);
-  static std::vector<int> GetInputDeviceIds();
+  void RegisterInputDeviceCallbacks(IInputDeviceCallbacks* handler);
+  void UnregisterInputDeviceCallbacks();
+  const CJNIViewInputDevice GetInputDevice(int deviceId);
+  std::vector<int> GetInputDeviceIds();
 
-  static void RegisterInputDeviceEventHandler(IInputDeviceEventHandler* handler);
-  static void UnregisterInputDeviceEventHandler();
-  static bool onInputDeviceEvent(const AInputEvent* event);
+  void RegisterInputDeviceEventHandler(IInputDeviceEventHandler* handler);
+  void UnregisterInputDeviceEventHandler();
+  bool onInputDeviceEvent(const AInputEvent* event);
 
   static void InitFrameCallback(CVideoSyncAndroid *syncImpl);
   static void DeinitFrameCallback();
@@ -228,7 +228,7 @@ public:
   void ProcessSlow();
 
   //PIP
-  static void RequestPictureInPictureMode();
+  void RequestPictureInPictureMode();
 
   static bool WaitVSync(unsigned int milliSeconds);
 
@@ -242,19 +242,19 @@ protected:
   // limit who can access Volume
   friend class CAESinkAUDIOTRACK;
 
-  static int GetMaxSystemVolume(JNIEnv *env);
+  int GetMaxSystemVolume(JNIEnv *env);
   bool AcquireAudioFocus();
   bool ReleaseAudioFocus();
-  static void RequestVisibleBehind(bool requested);
+  void RequestVisibleBehind(bool requested);
 
 private:
   static CXBMCApp* m_xbmcappinstance;
   static CCriticalSection m_AppMutex;
 
-  CJNIXBMCAudioManagerOnAudioFocusChangeListener m_audioFocusListener;
+  std::unique_ptr<CJNIXBMCAudioManagerOnAudioFocusChangeListener> m_audioFocusListener;
   static std::unique_ptr<CJNIXBMCMainView> m_mainView;
   std::unique_ptr<jni::CJNIXBMCMediaSession> m_mediaSession;
-  static bool HasLaunchIntent(const std::string &package);
+  bool HasLaunchIntent(const std::string &package);
   std::string GetFilenameFromIntent(const CJNIIntent &intent);
   void run();
   void stop();
@@ -267,8 +267,8 @@ private:
   static bool m_hasFocus;
   static bool m_headsetPlugged;
   static bool m_hdmiPlugged;
-  static IInputDeviceCallbacks* m_inputDeviceCallbacks;
-  static IInputDeviceEventHandler* m_inputDeviceEventHandler;
+  IInputDeviceCallbacks* m_inputDeviceCallbacks;
+  IInputDeviceEventHandler* m_inputDeviceEventHandler;
   static bool m_hasReqVisible;
   static bool m_hasPIP;
   bool m_videosurfaceInUse;

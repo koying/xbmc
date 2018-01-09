@@ -1054,7 +1054,7 @@ bool CGUIMediaWindow::OnClick(int iItem, const std::string &player)
   {
     std::string appName = URIUtils::GetFileName(pItem->GetPath());
     CLog::Log(LOGDEBUG, "CGUIMediaWindow::OnClick Trying to run: %s",appName.c_str());
-    return CXBMCApp::StartActivity(appName);
+    return CXBMCApp::get()->StartActivity(appName);
   }
 #endif
   else
