@@ -47,6 +47,7 @@
 #include "JNIXBMCAudioManagerOnAudioFocusChangeListener.h"
 #include "JNIXBMCMainView.h"
 #include "JNIXBMCMediaSession.h"
+#include "JNIXBMCInputDeviceListener.h"
 #include "platform/xbmc.h"
 #include "utils/Geometry.h"
 
@@ -108,6 +109,7 @@ class CXBMCApp
     , public CJNIBroadcastReceiver
     , public ANNOUNCEMENT::IAnnouncer
     , public CJNISurfaceHolderCallback
+    , public jni::CJNIXBMCInputDeviceListener
 {
 public:
   explicit CXBMCApp(ANativeActivity *nativeActivity);
