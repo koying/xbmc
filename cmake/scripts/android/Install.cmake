@@ -60,7 +60,6 @@ set(package_files strings.xml
                   src/Splash.java
                   src/Main.java
                   src/XBMCBroadcastReceiver.java
-                  src/XBMCInputDeviceListener.java
                   src/XBMCJsonRPC.java
                   src/XBMCMainView.java
                   src/XBMCMediaSession.java
@@ -82,6 +81,7 @@ set(package_files strings.xml
                   src/interfaces/XBMCNsdManagerResolveListener.java
                   src/interfaces/XBMCNsdManagerRegistrationListener.java
                   src/interfaces/XBMCNsdManagerDiscoveryListener.java
+                  src/interfaces/XBMCInputDeviceListener.java
                   src/model/TVEpisode.java
                   src/model/Movie.java
                   src/model/TVShow.java
