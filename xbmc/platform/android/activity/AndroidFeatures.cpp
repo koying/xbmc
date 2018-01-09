@@ -23,6 +23,7 @@
 #include <cpu-features.h>
 #include <androidjni/JNIThreading.h>
 
+#include "platform/android/activity/XBMCApp.h"
 #include "utils/log.h"
 
 bool CAndroidFeatures::HasNeon()

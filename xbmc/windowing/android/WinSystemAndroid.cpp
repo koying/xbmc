@@ -240,7 +240,8 @@ void CWinSystemAndroid::UpdateResolutions()
 
 bool CWinSystemAndroid::Minimize()
 {
-  CXBMCApp::moveTaskToBack(true);
+  CXBMCApp::get()->moveTaskToBack(true);
+  return true;
 }
 
 bool CWinSystemAndroid::Hide()
