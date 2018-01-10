@@ -18,6 +18,7 @@ set(SOURCES android_main.cpp
             JNIXBMCJsonHandler.cpp
             JNIXBMCFile.cpp
             JNIXBMCInputDeviceListener.cpp
+            JNIXBMCBroadcastReceiver.cpp
             ${NDKROOT}/sources/android/native_app_glue/android_native_app_glue.c
             ${NDKROOT}/sources/android/cpufeatures/cpu-features.c)
 
@@ -43,6 +44,7 @@ set(HEADERS AndroidExtra.h
             JNIXBMCJsonHandler.h
             JNIXBMCFile.h
             JNIXBMCInputDeviceListener.h
+            JNIXBMCBroadcastReceiver.h
             XBMCApp.h
             )
 
