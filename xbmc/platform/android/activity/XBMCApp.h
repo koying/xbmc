@@ -46,6 +46,7 @@
 #include "JNIXBMCMainView.h"
 #include "JNIXBMCMediaSession.h"
 #include "JNIXBMCInputDeviceListener.h"
+#include "JNIXBMCBroadcastReceiver.h"
 #include "platform/xbmc.h"
 #include "utils/Geometry.h"
 
@@ -252,6 +253,7 @@ private:
   static CCriticalSection m_AppMutex;
 
   std::unique_ptr<CJNIXBMCAudioManagerOnAudioFocusChangeListener> m_audioFocusListener;
+  std::unique_ptr<jni::CJNIXBMCBroadcastReceiver> m_broadcastReceiver;
   static std::unique_ptr<CJNIXBMCMainView> m_mainView;
   std::unique_ptr<jni::CJNIXBMCMediaSession> m_mediaSession;
   bool HasLaunchIntent(const std::string &package);
