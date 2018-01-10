@@ -150,8 +150,8 @@ CRect CXBMCApp::m_surface_rect;
 CXBMCApp::CXBMCApp(ANativeActivity* nativeActivity)
   : CJNIBase()
   , CJNIMainActivity(nativeActivity->clazz)
-  , CJNIBroadcastReceiver(std::string(CCompileInfo::GetPackage()) + "/XBMCBroadcastReceiver")
   , CJNIXBMCInputDeviceListener()
+  , CJNIBroadcastReceiver()
   , m_videosurfaceInUse(false)
   , m_inputDeviceCallbacks(nullptr)
   , m_inputDeviceEventHandler(nullptr)
@@ -166,6 +166,7 @@ CXBMCApp::CXBMCApp(ANativeActivity* nativeActivity)
     return;
   }
   m_audioFocusListener.reset(new CJNIXBMCAudioManagerOnAudioFocusChangeListener());
+  m_broadcastReceiver.reset(new CJNIXBMCBroadcastReceiver(this));
   m_mainView.reset(new CJNIXBMCMainView(this));
   m_firstrun = true;
   m_exiting = false;
@@ -233,7 +234,8 @@ void CXBMCApp::onStart()
     intentFilter.addAction("android.intent.action.HDMI_AUDIO_PLUG");
     intentFilter.addAction("android.intent.action.SCREEN_OFF");
     intentFilter.addAction("android.net.conn.CONNECTIVITY_CHANGE");
-    registerReceiver(*this, intentFilter);
+    registerReceiver(*m_broadcastReceiver, intentFilter);
+
     m_mediaSession.reset(new CJNIXBMCMediaSession());
   }
 }
@@ -286,7 +288,7 @@ void CXBMCApp::onDestroy()
 {
   android_printf("%s", __PRETTY_FUNCTION__);
 
-  unregisterReceiver(*this);
+  unregisterReceiver(*m_broadcastReceiver);
 
   m_mediaSession.release();
 

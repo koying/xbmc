@@ -34,6 +34,7 @@
 #include "platform/android/activity/JNIXBMCJsonHandler.h"
 #include "platform/android/activity/JNIXBMCFile.h"
 #include "platform/android/activity/JNIXBMCInputDeviceListener.h"
+#include "platform/android/activity/JNIXBMCBroadcastReceiver.h"
 #include "utils/StringUtils.h"
 #include "activity/XBMCApp.h"
 
@@ -62,6 +63,7 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved)
   jni::CJNIXBMCJsonHandler::RegisterNatives(env);
   jni::CJNIXBMCFile::RegisterNatives(env);
   jni::CJNIXBMCInputDeviceListener::RegisterNatives(env);
+  jni::CJNIXBMCBroadcastReceiver::RegisterNatives(env);
 
   jclass cMain = env->FindClass(mainClass.c_str());
   if(cMain)
@@ -79,16 +81,6 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved)
       {"_onPictureInPictureModeChanged", "(Z)V", (void*)&CJNIMainActivity::_onPictureInPictureModeChanged},
     };
     env->RegisterNatives(cMain, methods, sizeof(methods)/sizeof(methods[0]));
-  }
-
-  jclass cBroadcastReceiver = env->FindClass(bcReceiver.c_str());
-  if(cBroadcastReceiver)
-  {
-    JNINativeMethod methods[] = 
-    {
-      {"_onReceive", "(Landroid/content/Intent;)V", (void*)&CJNIBroadcastReceiver::_onReceive},
-    };
-    env->RegisterNatives(cBroadcastReceiver, methods, sizeof(methods)/sizeof(methods[0]));
   }
 
   jclass cSettingsObserver = env->FindClass(settingsObserver.c_str());
