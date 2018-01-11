@@ -19,9 +19,9 @@
  */
 
 #include "GameClientMouse.h"
-#include "GameClientInput.h"
+#include "GameClient.h"
+#include "GameClientTranslator.h"
 #include "addons/kodi-addon-dev-kit/include/kodi/kodi_game_types.h"
-#include "games/addons/GameClient.h"
 #include "input/mouse/IMouseInputProvider.h"
 #include "input/Key.h"
 #include "utils/log.h"
@@ -29,9 +29,7 @@
 using namespace KODI;
 using namespace GAME;
 
-CGameClientMouse::CGameClientMouse(const CGameClient &gameClient,
-                                   const KodiToAddonFuncTable_Game &dllStruct,
-                                   MOUSE::IMouseInputProvider *inputProvider) :
+CGameClientMouse::CGameClientMouse(const CGameClient* gameClient, const KodiToAddonFuncTable_Game* dllStruct, MOUSE::IMouseInputProvider *inputProvider) :
   m_gameClient(gameClient),
   m_dllStruct(dllStruct),
   m_inputProvider(inputProvider),
@@ -52,7 +50,7 @@ std::string CGameClientMouse::ControllerID(void) const
 bool CGameClientMouse::OnMotion(const std::string& relpointer, int dx, int dy)
 {
   // Only allow activated input in fullscreen game
-  if (!m_gameClient.Input().AcceptsInput())
+  if (!m_gameClient->AcceptsInput())
   {
     return false;
   }
@@ -70,11 +68,11 @@ bool CGameClientMouse::OnMotion(const std::string& relpointer, int dx, int dy)
 
   try
   {
-    bHandled = m_dllStruct.InputEvent(&event);
+    bHandled = m_dllStruct->InputEvent(&event);
   }
   catch (...)
   {
-    CLog::Log(LOGERROR, "GAME: %s: exception caught in InputEvent()", m_gameClient.ID().c_str());
+    CLog::Log(LOGERROR, "GAME: %s: exception caught in InputEvent()", m_gameClient->ID().c_str());
   }
 
   return bHandled;
@@ -83,7 +81,7 @@ bool CGameClientMouse::OnMotion(const std::string& relpointer, int dx, int dy)
 bool CGameClientMouse::OnButtonPress(const std::string& button)
 {
   // Only allow activated input in fullscreen game
-  if (!m_gameClient.Input().AcceptsInput())
+  if (!m_gameClient->AcceptsInput())
   {
     return false;
   }
@@ -100,11 +98,11 @@ bool CGameClientMouse::OnButtonPress(const std::string& button)
 
   try
   {
-    bHandled = m_dllStruct.InputEvent(&event);
+    bHandled = m_dllStruct->InputEvent(&event);
   }
   catch (...)
   {
-    CLog::Log(LOGERROR, "GAME: %s: exception caught in InputEvent()", m_gameClient.ID().c_str());
+    CLog::Log(LOGERROR, "GAME: %s: exception caught in InputEvent()", m_gameClient->ID().c_str());
   }
 
   return bHandled;
@@ -122,10 +120,10 @@ void CGameClientMouse::OnButtonRelease(const std::string& button)
 
   try
   {
-    m_dllStruct.InputEvent(&event);
+    m_dllStruct->InputEvent(&event);
   }
   catch (...)
   {
-    CLog::Log(LOGERROR, "GAME: %s: exception caught in InputEvent()", m_gameClient.ID().c_str());
+    CLog::Log(LOGERROR, "GAME: %s: exception caught in InputEvent()", m_gameClient->ID().c_str());
   }
 }

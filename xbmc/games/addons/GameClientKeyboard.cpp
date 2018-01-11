@@ -19,10 +19,9 @@
  */
 
 #include "GameClientKeyboard.h"
-#include "GameClientInput.h"
+#include "GameClient.h"
+#include "GameClientTranslator.h"
 #include "addons/kodi-addon-dev-kit/include/kodi/kodi_game_types.h"
-#include "games/addons/GameClient.h"
-#include "games/addons/GameClientTranslator.h"
 #include "input/keyboard/IKeyboardInputProvider.h"
 #include "input/Key.h"
 #include "utils/log.h"
@@ -32,9 +31,7 @@ using namespace GAME;
 
 #define BUTTON_INDEX_MASK  0x01ff
 
-CGameClientKeyboard::CGameClientKeyboard(const CGameClient &gameClient,
-                                         const KodiToAddonFuncTable_Game &dllStruct,
-                                         KEYBOARD::IKeyboardInputProvider *inputProvider) :
+CGameClientKeyboard::CGameClientKeyboard(const CGameClient* gameClient, const KodiToAddonFuncTable_Game* dllStruct, KEYBOARD::IKeyboardInputProvider *inputProvider) :
   m_gameClient(gameClient),
   m_dllStruct(dllStruct),
   m_inputProvider(inputProvider)
@@ -50,7 +47,7 @@ CGameClientKeyboard::~CGameClientKeyboard()
 bool CGameClientKeyboard::OnKeyPress(const CKey& key)
 {
   // Only allow activated input in fullscreen game
-  if (!m_gameClient.Input().AcceptsInput())
+  if (!m_gameClient->AcceptsInput())
   {
     CLog::Log(LOGDEBUG, "GAME: key press ignored, not in fullscreen game");
     return false;
@@ -72,11 +69,11 @@ bool CGameClientKeyboard::OnKeyPress(const CKey& key)
   {
     try
     {
-      bHandled = m_dllStruct.InputEvent(&event);
+      bHandled = m_dllStruct->InputEvent(&event);
     }
     catch (...)
     {
-      CLog::Log(LOGERROR, "GAME: %s: exception caught in InputEvent()", m_gameClient.ID().c_str());
+      CLog::Log(LOGERROR, "GAME: %s: exception caught in InputEvent()", m_gameClient->ID().c_str());
     }
   }
 
@@ -99,11 +96,11 @@ void CGameClientKeyboard::OnKeyRelease(const CKey& key)
   {
     try
     {
-      m_dllStruct.InputEvent(&event);
+      m_dllStruct->InputEvent(&event);
     }
     catch (...)
     {
-      CLog::Log(LOGERROR, "GAME: %s: exception caught in InputEvent()", m_gameClient.ID().c_str());
+      CLog::Log(LOGERROR, "GAME: %s: exception caught in InputEvent()", m_gameClient->ID().c_str());
     }
   }
 }

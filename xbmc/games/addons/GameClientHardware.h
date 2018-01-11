@@ -17,20 +17,38 @@
  *  <http://www.gnu.org/licenses/>.
  *
  */
+#pragma once
 
-#include "GameClientSubsystem.h"
-#include "GameClient.h"
+#include "input/hardware/IHardwareInput.h"
 
-using namespace KODI;
-using namespace GAME;
-
-CGameClientSubsystem::CGameClientSubsystem(CGameClient &gameClient,
-                                           AddonInstance_Game &addonStruct,
-                                           CCriticalSection &clientAccess) :
-  m_gameClient(gameClient),
-  m_struct(addonStruct),
-  m_clientAccess(clientAccess)
+namespace KODI
 {
-}
+namespace GAME
+{
+  class CGameClient;
 
-CGameClientInput &CGameClientSubsystem::Input() const { return m_gameClient.Input(); }
+  /*!
+   * \ingroup games
+   * \brief Handles events for hardware such as reset buttons
+   */
+  class CGameClientHardware : public HARDWARE::IHardwareInput
+  {
+  public:
+    /*!
+     * \brief Constructor
+     *
+     * \param gameClient The game client implementation
+     */
+    explicit CGameClientHardware(CGameClient* gameClient);
+
+    virtual ~CGameClientHardware() = default;
+
+    // Implementation of IHardwareInput
+    virtual void OnResetButton(unsigned int port) override;
+
+  private:
+    // Construction parameter
+    CGameClient* const m_gameClient;
+  };
+}
+}

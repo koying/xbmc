@@ -19,26 +19,24 @@
  */
 
 #include "GameClientJoystick.h"
-#include "GameClientInput.h"
-#include "games/addons/GameClient.h"
+#include "GameClient.h"
 #include "games/controllers/Controller.h"
 #include "input/joysticks/IInputReceiver.h"
 #include "utils/log.h"
 
+#include <algorithm>
 #include <assert.h>
 
 using namespace KODI;
 using namespace GAME;
 
-CGameClientJoystick::CGameClientJoystick(const CGameClient &gameClient,
-                                         int port,
-                                         const ControllerPtr& controller,
-                                         const KodiToAddonFuncTable_Game &dllStruct) :
+CGameClientJoystick::CGameClientJoystick(CGameClient* gameClient, int port, const ControllerPtr& controller, const KodiToAddonFuncTable_Game *dllStruct) :
   m_gameClient(gameClient),
   m_port(port),
   m_controller(controller),
   m_dllStruct(dllStruct)
 {
+  assert(m_gameClient != NULL);
   assert(m_controller.get() != NULL);
 }
 
@@ -51,11 +49,11 @@ bool CGameClientJoystick::HasFeature(const std::string& feature) const
 {
   try
   {
-    return m_dllStruct.HasFeature(m_controller->ID().c_str(), feature.c_str());
+    return m_dllStruct->HasFeature(m_controller->ID().c_str(), feature.c_str());
   }
   catch (...)
   {
-    CLog::Log(LOGERROR, "GAME: %s: exception caught in HasFeature()", m_gameClient.ID().c_str());
+    CLog::Log(LOGERROR, "GAME: %s: exception caught in HasFeature()", m_gameClient->ID().c_str());
   }
 
   return false;
@@ -63,7 +61,7 @@ bool CGameClientJoystick::HasFeature(const std::string& feature) const
 
 bool CGameClientJoystick::AcceptsInput(const std::string &feature) const
 {
-  return m_gameClient.Input().AcceptsInput();
+  return m_gameClient->AcceptsInput();
 }
 
 bool CGameClientJoystick::OnButtonPress(const std::string& feature, bool bPressed)
@@ -82,11 +80,11 @@ bool CGameClientJoystick::OnButtonPress(const std::string& feature, bool bPresse
 
   try
   {
-    bHandled = m_dllStruct.InputEvent(&event);
+    bHandled = m_dllStruct->InputEvent(&event);
   }
   catch (...)
   {
-    CLog::Log(LOGERROR, "GAME: %s: exception caught in InputEvent()", m_gameClient.ID().c_str());
+    CLog::Log(LOGERROR, "GAME: %s: exception caught in InputEvent()", m_gameClient->ID().c_str());
   }
 
   return bHandled;
@@ -108,11 +106,11 @@ bool CGameClientJoystick::OnButtonMotion(const std::string& feature, float magni
 
   try
   {
-    bHandled = m_dllStruct.InputEvent(&event);
+    bHandled = m_dllStruct->InputEvent(&event);
   }
   catch (...)
   {
-    CLog::Log(LOGERROR, "GAME: %s: exception caught in InputEvent()", m_gameClient.ID().c_str());
+    CLog::Log(LOGERROR, "GAME: %s: exception caught in InputEvent()", m_gameClient->ID().c_str());
   }
 
   return bHandled;
@@ -135,11 +133,11 @@ bool CGameClientJoystick::OnAnalogStickMotion(const std::string& feature, float 
 
   try
   {
-    bHandled = m_dllStruct.InputEvent(&event);
+    bHandled = m_dllStruct->InputEvent(&event);
   }
   catch (...)
   {
-    CLog::Log(LOGERROR, "GAME: %s: exception caught in InputEvent()", m_gameClient.ID().c_str());
+    CLog::Log(LOGERROR, "GAME: %s: exception caught in InputEvent()", m_gameClient->ID().c_str());
   }
 
   return bHandled;
@@ -163,11 +161,11 @@ bool CGameClientJoystick::OnAccelerometerMotion(const std::string& feature, floa
 
   try
   {
-    bHandled = m_dllStruct.InputEvent(&event);
+    bHandled = m_dllStruct->InputEvent(&event);
   }
   catch (...)
   {
-    CLog::Log(LOGERROR, "GAME: %s: exception caught in InputEvent()", m_gameClient.ID().c_str());
+    CLog::Log(LOGERROR, "GAME: %s: exception caught in InputEvent()", m_gameClient->ID().c_str());
   }
 
   return bHandled;
@@ -189,12 +187,12 @@ bool CGameClientJoystick::OnWheelMotion(const std::string& feature, float positi
 
   try
   {
-    bHandled = m_dllStruct.InputEvent(&event);
+    bHandled = m_dllStruct->InputEvent(&event);
   }
   catch (...)
   {
     CLog::Log(LOGERROR, "GAME: %s: exception caught while handling wheel \"%s\"",
-              m_gameClient.ID().c_str(), feature.c_str());
+              m_gameClient->ID().c_str(), feature.c_str());
   }
 
   return bHandled;
@@ -216,12 +214,12 @@ bool CGameClientJoystick::OnThrottleMotion(const std::string& feature, float pos
 
   try
   {
-    bHandled = m_dllStruct.InputEvent(&event);
+    bHandled = m_dllStruct->InputEvent(&event);
   }
   catch (...)
   {
     CLog::Log(LOGERROR, "GAME: %s: exception caught while handling throttle \"%s\"",
-              m_gameClient.ID().c_str(), feature.c_str());
+              m_gameClient->ID().c_str(), feature.c_str());
   }
 
   return bHandled;

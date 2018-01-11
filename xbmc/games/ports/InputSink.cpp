@@ -20,7 +20,6 @@
 
 #include "InputSink.h"
 #include "games/addons/GameClient.h"
-#include "games/addons/input/GameClientInput.h"
 #include "input/joysticks/JoystickIDs.h"
 
 using namespace KODI;
@@ -38,7 +37,7 @@ std::string CInputSink::ControllerID(void) const
 
 bool CInputSink::AcceptsInput(const std::string& feature) const
 {
-  return m_gameClient.Input().AcceptsInput();
+  return m_gameClient.AcceptsInput();
 }
 
 bool CInputSink::OnButtonPress(const std::string& feature, bool bPressed)
