@@ -24,6 +24,7 @@
 #include "CompileInfo.h"
 
 #include "XBMCApp.h"
+#include "Application.h"
 #include "utils/log.h"
 #include "utils/FileUtils.h"
 
@@ -62,6 +63,9 @@ jboolean CJNIXBMCFile::_open(JNIEnv *env, jobject thiz, jstring path)
     return false;
 
   std::string strPath = jcast<std::string>(jhstring::fromJNI(path));
+
+  if (!g_application.IsInitialized())
+    return false;
 
   if (find_instance(thiz))
     return false;
