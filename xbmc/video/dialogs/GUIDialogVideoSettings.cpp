@@ -291,7 +291,7 @@ void CGUIDialogVideoSettings::InitializeSettings()
     return;
   }
 
-  bool usePopup = g_SkinInfo->HasSkinFile("DialogSlider.xml");
+  bool usePopup = g_SkinInfo && g_SkinInfo->HasSkinFile("DialogSlider.xml");
 
   const CVideoSettings videoSettings = g_application.GetAppPlayer().GetVideoSettings();
 
