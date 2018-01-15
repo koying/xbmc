@@ -103,7 +103,11 @@ namespace XBMCAddon
     {
       XBMC_TRACE;
       RESOLUTION_INFO res;
-      std::string strSkinPath = g_SkinInfo->GetSkinPath(xmlFilename, &res);
+      std::string strSkinPath;
+      if (g_SkinInfo)
+        strSkinPath = g_SkinInfo->GetSkinPath(xmlFilename, &res);
+      else
+        throw WindowException("No skin loaded");
       m_isMedia = isMedia;
 
       if (!XFILE::CFile::Exists(strSkinPath))
