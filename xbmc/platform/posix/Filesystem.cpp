@@ -115,8 +115,7 @@ std::string temp_file_path(std::string suffix, std::error_code &ec)
     return std::string();
   }
 
-  strncpy(tmp, tempPath.c_str(), sizeof(tmp) - 1);
-  tmp[sizeof(tmp) - 1] = '\0';
+  strcpy(tmp, tempPath.c_str());
 
   auto fd = mkstemps(tmp, suffix.length());
   if (fd < 0)
