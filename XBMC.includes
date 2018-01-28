@@ -1,7 +1,6 @@
-/home/cbro/android-toolchains/android-14/sysroot/usr/include
-/opt/android-dev/android-toolchain-arm-21-r12b/sysroot/usr/include
-/opt/android-dev/android-toolchain-arm-21-r12b/include/c++/4.9.x
-/home/cbro/kodi-leia-build/arm-linux-androideabi-android-23-debug/include
+/mnt/d/winlin/android-toolchain-arm-21-r16b/sysroot/usr/include
+/mnt/d/winlin/android-toolchain-arm-21-r16b/include/c++/4.9.x
+/mnt/d/winlin/kodi-build-libc/arm-linux-androideabi-21-debug/include
 
 addons/library.xbmc.addon
 addons/library.xbmc.codec
