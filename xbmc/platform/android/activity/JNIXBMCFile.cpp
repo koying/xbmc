@@ -23,6 +23,7 @@
 
 #include "CompileInfo.h"
 
+#include "XBMCApp.h"
 #include "utils/log.h"
 #include "utils/FileUtils.h"
 
@@ -57,6 +58,9 @@ void CJNIXBMCFile::RegisterNatives(JNIEnv *env)
 
 jboolean CJNIXBMCFile::_open(JNIEnv *env, jobject thiz, jstring path)
 {
+  if (CXBMCApp::get()->isExiting())
+    return false;
+
   std::string strPath = jcast<std::string>(jhstring::fromJNI(path));
 
   if (find_instance(thiz))
@@ -83,6 +87,9 @@ jboolean CJNIXBMCFile::_open(JNIEnv *env, jobject thiz, jstring path)
 
 void CJNIXBMCFile::_close(JNIEnv *env, jobject thiz)
 {
+  if (CXBMCApp::get()->isExiting())
+    return;
+
   CJNIXBMCFile *inst = find_instance(thiz);
   if (inst)
   {
@@ -97,14 +104,17 @@ jbyteArray CJNIXBMCFile::_read(JNIEnv *env, jobject thiz)
   ssize_t sz = 0;
   char buffer[BUFFSIZE];
 
-  CJNIXBMCFile *inst = find_instance(thiz);
-  if (inst && inst->m_file)
+  if (!CXBMCApp::get()->isExiting())
   {
-    sz = inst->m_file->Read((void*)buffer, BUFFSIZE);
-    if (sz <= 0)
+    CJNIXBMCFile *inst = find_instance(thiz);
+    if (inst && inst->m_file)
     {
-      inst->m_eof = true;
-      sz = 0;
+      sz = inst->m_file->Read((void*)buffer, BUFFSIZE);
+      if (sz <= 0)
+      {
+        inst->m_eof = true;
+        sz = 0;
+      }
     }
   }
 
@@ -122,6 +132,9 @@ jbyteArray CJNIXBMCFile::_read(JNIEnv *env, jobject thiz)
 
 jboolean CJNIXBMCFile::_eof(JNIEnv *env, jobject thiz)
 {
+  if (CXBMCApp::get()->isExiting())
+    return true;
+
   CJNIXBMCFile *inst = find_instance(thiz);
   if (inst)
     return inst->m_eof;
