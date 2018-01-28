@@ -113,6 +113,7 @@ public:
   explicit CXBMCApp(ANativeActivity *nativeActivity);
   virtual ~CXBMCApp();
   static CXBMCApp* get() { return m_xbmcappinstance; }
+  bool isExiting() { return m_exiting; }
 
   // IAnnouncer IF
   virtual void Announce(ANNOUNCEMENT::AnnouncementFlag flag, const char *sender, const char *message, const CVariant &data) override;
