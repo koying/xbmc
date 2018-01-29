@@ -254,6 +254,7 @@ bool CAndroidUtils::SetNativeResolution(const RESOLUTION_INFO &res)
   else if (std::abs(currentRefreshRate() - res.fRefreshRate) > 0.0001)
     CXBMCApp::SetRefreshRate(res.fRefreshRate);
   CXBMCApp::SetBuffersGeometry(res.iWidth, res.iHeight, 0);
+  CXBMCApp::CalculateGUIRatios();
 
   return true;
 }
