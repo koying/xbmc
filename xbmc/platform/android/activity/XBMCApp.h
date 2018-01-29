@@ -233,6 +233,7 @@ public:
   bool getVideosurfaceInUse();
   void setVideosurfaceInUse(bool videosurfaceInUse);
 
+  static void CalculateGUIRatios();
   void onLayoutChange(int left, int top, int width, int height);
 
 protected:
@@ -289,7 +290,6 @@ private:
   void XBMC_Stop();
   bool XBMC_DestroyDisplay();
   bool XBMC_SetupDisplay();
-  static void CalculateGUIRatios();
   static CRect m_droid2guiRatio;
 
   static uint32_t m_playback_state;
