@@ -205,11 +205,6 @@ void CXBMCApp::Announce(ANNOUNCEMENT::AnnouncementFlag flag, const char *sender,
      if (strcmp(message, "OnChanged") == 0)
       UpdateSessionMetadata();
   }
-  else if (flag & GUI)
-  {
-     if (strcmp(message, "OnVideoResolutionChanged") == 0)
-      CalculateGUIRatios();
-  }
 }
 
 void CXBMCApp::onStart()
