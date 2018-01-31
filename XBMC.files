@@ -6165,6 +6165,7 @@ xbmc/cores/AudioEngine/Interfaces/AEResample.h
 xbmc/cores/AudioEngine/Interfaces/IAudioCallback.h
 xbmc/cores/VideoPlayer/AudioSinkAE.cpp
 xbmc/cores/VideoPlayer/AudioSinkAE.h
+xbmc/guilib/Resolution.cpp
 xbmc/input/Action.cpp
 xbmc/input/Action.h
 xbmc/input/ActionIDs.h
