@@ -51,7 +51,6 @@ public:
   bool Minimize() override;
   bool Hide() override;
   bool Show(bool raise = true) override;
-  bool BringToFront() override;
 
   void Register(IDispResource *resource) override;
   void Unregister(IDispResource *resource) override;

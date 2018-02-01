@@ -3102,7 +3102,7 @@ bool CApplication::PlayFile(CFileItem item, const std::string& player, bool bRes
 
   // If video, bring us to front
   if (item.IsVideo())
-    CServiceBroker::GetWinSystem().BringToFront();
+    CServiceBroker::GetWinSystem().Show(true);
 
   CPlayerOptions options;
 

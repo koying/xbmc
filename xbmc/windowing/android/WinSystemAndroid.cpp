@@ -251,12 +251,8 @@ bool CWinSystemAndroid::Hide()
 
 bool CWinSystemAndroid::Show(bool raise)
 {
-  return false;
-}
-
-bool CWinSystemAndroid::BringToFront()
-{
   CXBMCApp::get()->BringToFront();
+  return true;
 }
 
 void CWinSystemAndroid::Register(IDispResource *resource)
