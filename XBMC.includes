@@ -1,6 +1,10 @@
-/mnt/d/winlin/android-toolchain-arm-21-r16b/sysroot/usr/include
-/mnt/d/winlin/android-toolchain-arm-21-r16b/include/c++/4.9.x
-/mnt/d/winlin/kodi-build-libc/arm-linux-androideabi-21-debug/include
+#/mnt/d/winlin/android-toolchain-arm-21-r16b/sysroot/usr/include
+#/mnt/d/winlin/android-toolchain-arm-21-r16b/include/c++/4.9.x
+#/mnt/d/winlin/kodi-build-libc/arm-linux-androideabi-21-debug/include
+
+/opt/android-dev/android-toolchain-x86-21-r16b/sysroot/usr/include
+/opt/android-dev/android-toolchain-x86-21-r16b/include/c++/4.9.x
+/home/cloud9/kodi-build-r16/arm-linux-androideabi-21-debug/include
 
 addons/library.xbmc.addon
 addons/library.xbmc.codec
@@ -486,3 +490,5 @@ xbmc/cores/VideoPlayer
 xbmc/windowing/win10
 tools/android/packaging/xbmc/src
 tools/android/packaging/xbmc/src/interfaces
+xbmc/platform/android/service
+xbmc/cores/RetroPlayer
