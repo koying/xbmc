@@ -24,6 +24,7 @@ import java.util.Enumeration;
 import java.util.ArrayList;
 
 import android.net.Uri;
+import android.Manifest;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -49,6 +50,8 @@ import android.content.BroadcastReceiver;
 import android.content.IntentFilter;
 import android.os.Environment;
 
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+
 public class Splash extends Activity
 {
 
@@ -59,13 +62,18 @@ public class Splash extends Activity
   private static final int Clearing = 4;
   private static final int Caching = 5;
   private static final int CachingDone = 6;
+  private static final int CheckExternalStorage = 11;
   private static final int WaitingStorageChecked = 7;
   private static final int StorageChecked = 8;
+  private static final int CheckingPermissions = 9;
+  private static final int CheckingPermissionsDone = 10;
   private static final int DownloadingObb = 90;
   private static final int DownloadObbDone = 91;
   private static final int StartingXBMC = 99;
 
   private static final String TAG = "@APP_NAME@";
+
+  private static final int PERMISSION_RESULT_CODE = 8947;
 
   private String mCpuinfo = "";
   private ArrayList<String> mMounts = new ArrayList<String>();
@@ -86,6 +94,7 @@ public class Splash extends Activity
   private BroadcastReceiver mExternalStorageReceiver = null;
   private boolean mExternalStorageChecked = false;
   private boolean mCachingDone = false;
+  private boolean mPermissionOK = false;
   private boolean mInstallLibs = false;
 
   private class StateMachine extends Handler
@@ -108,6 +117,23 @@ public class Splash extends Activity
         case InError:
           showErrorDialog(mSplash, "Error", mErrorMsg);
           break;
+        case CheckingPermissions:
+          mSplash.mTextView.setText("Asking permissions...");
+          mSplash.mProgress.setVisibility(View.INVISIBLE);
+
+          requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    PERMISSION_RESULT_CODE);
+          break;
+        case CheckingPermissionsDone:
+          if (mPermissionOK)
+            sendEmptyMessage(CheckExternalStorage);
+          else
+          {
+            mErrorMsg = "Permission denied!! Exiting...";
+            sendEmptyMessage(InError);
+            break;
+          }
+          break;
         case Checking:
           break;
         case Clearing:
@@ -120,10 +146,26 @@ public class Splash extends Activity
           new FillCache(mSplash).execute();
           break;
         case Caching:
+          if (!mCachingDone)
+            new FillCache(mSplash).execute();
+          else
+            mStateMachine.sendEmptyMessage(CachingDone);
           break;
         case CachingDone:
           mSplash.mCachingDone = true;
           sendEmptyMessage(StartingXBMC);
+          break;
+        case CheckExternalStorage:
+          if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()))
+          {
+            mExternalStorageChecked = true;
+            sendEmptyMessage(StorageChecked);
+          }
+          else
+          {
+            startWatchingExternalStorage();
+            sendEmptyMessage(WaitingStorageChecked);
+          }
           break;
         case WaitingStorageChecked:
           mSplash.mTextView.setText("Waiting for external storage...");
@@ -138,6 +180,8 @@ public class Splash extends Activity
           else
           {
             SetupEnvironment();
+            MigrateUserData();
+
             if (mState == InError)
             {
               sendEmptyMessage(InError);
@@ -698,6 +742,40 @@ public class Splash extends Activity
     return m.find();
   }
 
+  private boolean CheckPermissions()
+  {
+    boolean retVal = false;
+    if (android.os.Build.VERSION.SDK_INT > 22)
+    {
+      int permissionCheck;
+      permissionCheck = checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+      if (permissionCheck == PERMISSION_GRANTED)
+        retVal = true;
+    }
+    else
+      retVal=  true;
+
+    return retVal;
+  }
+
+  @Override
+  public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults)
+  {
+    switch (requestCode)
+    {
+      case PERMISSION_RESULT_CODE:
+      {
+        // If request is cancelled, the result arrays are empty.
+        if (grantResults.length > 0
+                && grantResults[0] == PERMISSION_GRANTED)
+        {
+          mPermissionOK = true;
+        }
+      }
+    }
+    mStateMachine.sendEmptyMessage(CheckingPermissionsDone);
+  }
+
   void updateExternalStorageState()
   {
     String state = Environment.getExternalStorageState();
@@ -845,21 +923,29 @@ public class Splash extends Activity
     if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()))
       mExternalStorageChecked = true;
 
-    if (mState != InError && mExternalStorageChecked)
+    mPermissionOK = CheckPermissions();
+    if (!mPermissionOK)
     {
-      mState = ChecksDone;
-
-      SetupEnvironment();
-      MigrateUserData();
-
-      if ((mState != DownloadingObb && mState != InError) && fXbmcHome.exists() && fXbmcHome.lastModified() >= fPackagePath.lastModified() && !mInstallLibs)
+      mState = CheckingPermissions;
+    }
+    else
+    {
+      if (mState != InError && mExternalStorageChecked)
       {
-        mState = CachingDone;
-        mCachingDone = true;
+        mState = ChecksDone;
+
+        SetupEnvironment();
+        MigrateUserData();
+
+        if ((mState != DownloadingObb && mState != InError) && fXbmcHome.exists() && fXbmcHome.lastModified() >= fPackagePath.lastModified() && !mInstallLibs)
+        {
+          mState = CachingDone;
+          mCachingDone = true;
+        }
       }
     }
 
-    if ((mState != DownloadingObb && mState != InError) && mCachingDone && mExternalStorageChecked)
+    if ((mState != DownloadingObb && mState != InError) && mCachingDone && mExternalStorageChecked && mPermissionOK)
     {
       startXBMC();
       return;
@@ -869,7 +955,7 @@ public class Splash extends Activity
     mProgress = (ProgressBar) findViewById(R.id.progressBar1);
     mTextView = (TextView) findViewById(R.id.textView1);
 
-    if (mState == DownloadingObb || mState == InError)
+    if (mState == DownloadingObb || mState == InError || mState == CheckingPermissions)
     {
       mStateMachine.sendEmptyMessage(mState);
       return;
