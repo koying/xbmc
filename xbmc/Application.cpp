@@ -660,12 +660,16 @@ bool CApplication::CreateGUI()
 
   m_renderGUI = true;
 
+  if (!m_ServiceManager->InitStageThree())
+  {
+    CLog::Log(LOGERROR, "Application - Init3 failed");
+  }
+
   if (!CServiceBroker::GetWinSystem().InitWindowSystem())
   {
     CLog::Log(LOGFATAL, "CApplication::Create: Unable to init windowing system");
     return false;
   }
-
 
   // Retrieve the matching resolution based on GUI settings
   bool sav_res = false;
@@ -775,14 +779,14 @@ bool CApplication::StartGUI()
   g_windowManager.ActivateWindow(WINDOW_SPLASH);
 
   if (m_ServiceManager->GetSettings().GetBool(CSettings::SETTING_MASTERLOCK_STARTUPLOCK) &&
-      CProfilesManager::GetInstance().GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE &&
-     !CProfilesManager::GetInstance().GetMasterProfile().getLockCode().empty())
+      m_ServiceManager->GetProfileManager().GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE &&
+     !m_ServiceManager->GetProfileManager().GetMasterProfile().getLockCode().empty())
   {
      g_passwordManager.CheckStartUpLock();
   }
 
   // check if we should use the login screen
-  if (CProfilesManager::GetInstance().UsingLoginScreen())
+  if (m_ServiceManager->GetProfileManager().UsingLoginScreen())
   {
     // the login screen still needs to perform additional initialization
     uiInitializationFinished = false;
@@ -804,11 +808,6 @@ bool CApplication::StartGUI()
     uiInitializationFinished = firstWindow != WINDOW_STARTUP_ANIM;
 
     CStereoscopicsManager::GetInstance().Initialize();
-
-    if (!m_ServiceManager->InitStageThree())
-    {
-      CLog::Log(LOGERROR, "Application - Init3 failed");
-    }
   }
   // if the user interfaces has been fully initialized let everyone know
   if (uiInitializationFinished)
@@ -841,14 +840,6 @@ bool CApplication::InitWindow(RESOLUTION res)
   // set GUI res and force the clear of the screen
   g_graphicsContext.SetVideoResolution(res, false);
   return true;
-}
-
-bool CApplication::DestroyWindow()
-{
-  bool ret = CServiceBroker::GetWinSystem().DestroyWindow();
-  std::unique_ptr<CWinSystemBase> winSystem;
-  m_ServiceManager->SetWinSystem(std::move(winSystem));
-  return ret;
 }
 
 bool CApplication::InitDirectoriesLinux()
@@ -2526,22 +2517,26 @@ void CApplication::OnApplicationMessage(ThreadMessage* pMsg)
     if (m_renderGUI)
       break;
 
-    if (!g_application.IsGUICreated())
+    if (!IsGUICreated())
       CreateGUI();
 
     // We might come from a refresh rate switch destroying the native window; use the context resolution
-    *static_cast<bool*>(pMsg->lpVoid) = InitWindow(g_graphicsContext.GetVideoResolution());
+    InitWindow(g_graphicsContext.GetVideoResolution());
     SetRenderGUI(true);
     break;
 
   case TMSG_DISPLAY_CLEANUP:
-    DestroyWindow();
+    if (IsGUICreated())
+      CServiceBroker::GetWinSystem().DestroyWindow();
     SetRenderGUI(false);
     break;
 
   case TMSG_DISPLAY_DESTROY:
-    if (g_application.IsGUICreated())
+    if (IsGUICreated())
     {
+      if (m_ServiceManager)
+        m_ServiceManager->DeinitStageThree();
+
       DestroyGUI();
       SetRenderGUI(false);
     }
@@ -2793,11 +2788,11 @@ void CApplication::FrameMove(bool processEvents, bool processGUI)
       }
     }
 
-    HandleWinEvents();
-    CServiceBroker::GetInputManager().Process(g_windowManager.GetActiveWindowOrDialog(), frameTime);
-
     if (processGUI && m_renderGUI)
     {
+      HandleWinEvents();
+      CServiceBroker::GetInputManager().Process(g_windowManager.GetActiveWindowOrDialog(), frameTime);
+
       m_pInertialScrollingHandler->ProcessInertialScroll(frameTime);
       m_appPlayer.GetSeekHandler().FrameMove();
     }

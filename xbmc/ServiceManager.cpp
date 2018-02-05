@@ -18,6 +18,7 @@
  *
  */
 
+#include "AppParamParser.h"
 #include "ServiceManager.h"
 #include "addons/BinaryAddonCache.h"
 #include "addons/VFSEntry.h"
@@ -164,15 +165,6 @@ bool CServiceManager::InitStageTwo(const CAppParamParser &params)
 
   m_contextMenuManager.reset(new CContextMenuManager(*m_addonMgr.get()));
 
-  m_gameControllerManager.reset(new GAME::CControllerManager);
-  m_inputManager.reset(new CInputManager(params,
-                                         *m_profileManager));
-  m_inputManager->InitializeInputs();
-
-  m_peripherals.reset(new PERIPHERALS::CPeripherals(*m_announcementManager,
-                                                    *m_inputManager,
-                                                    *m_gameControllerManager));
-
   m_gameRenderManager.reset(new RETRO::CGUIGameRenderManager);
 
   m_fileExtensionProvider.reset(new CFileExtensionProvider());
@@ -182,6 +174,8 @@ bool CServiceManager::InitStageTwo(const CAppParamParser &params)
   m_powerManager->SetDefaults();
 
   m_weatherManager.reset(new CWeatherManager());
+
+  m_PVRManager->Init();
 
   init_level = 2;
   return true;
@@ -219,6 +213,16 @@ bool CServiceManager::StartAudioEngine()
 // stage 3 is called after successful initialization of WindowManager
 bool CServiceManager::InitStageThree()
 {
+  m_gameControllerManager.reset(new GAME::CControllerManager);
+  CAppParamParser params;
+  m_inputManager.reset(new CInputManager(params,
+                                         *m_profileManager));
+  m_inputManager->InitializeInputs();
+
+  m_peripherals.reset(new PERIPHERALS::CPeripherals(*m_announcementManager,
+                                                    *m_inputManager,
+                                                    *m_gameControllerManager));
+
   // Peripherals depends on strings being loaded before stage 3
   m_peripherals->Initialise();
 
@@ -229,7 +233,6 @@ bool CServiceManager::InitStageThree()
     *m_profileManager));
 
   m_contextMenuManager->Init();
-  m_PVRManager->Init();
 
   m_playerCoreFactory.reset(new CPlayerCoreFactory(*m_settings,
                                                    *m_profileManager));
@@ -243,10 +246,12 @@ void CServiceManager::DeinitStageThree()
   init_level = 2;
 
   m_playerCoreFactory.reset();
-  m_PVRManager->Deinit();
   m_contextMenuManager->Deinit();
   m_gameServices.reset();
   m_peripherals->Clear();
+  m_peripherals.reset();
+  m_inputManager.reset();
+  m_gameControllerManager.reset();
 }
 
 void CServiceManager::DeinitStageTwo()
@@ -257,14 +262,12 @@ void CServiceManager::DeinitStageTwo()
   m_powerManager.reset();
   m_fileExtensionProvider.reset();
   m_gameRenderManager.reset();
-  m_peripherals.reset();
-  m_inputManager.reset();
-  m_gameControllerManager.reset();
   m_contextMenuManager.reset();
   m_serviceAddons.reset();
   m_favouritesService.reset();
   m_binaryAddonCache.reset();
   m_dataCacheCore.reset();
+  m_PVRManager->Deinit();
   m_PVRManager.reset();
   m_vfsAddonCache.reset();
   m_repositoryUpdater.reset();

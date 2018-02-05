@@ -152,7 +152,6 @@ public:
   bool DestroyGUI();
   bool StartGUI();
   bool InitWindow(RESOLUTION res = RES_INVALID);
-  bool DestroyWindow();
   void StartServices();
   void StopServices();
 
