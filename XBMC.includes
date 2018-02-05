@@ -490,3 +490,5 @@ xbmc/cores/VideoPlayer
 xbmc/windowing/win10
 tools/android/packaging/xbmc/src
 tools/android/packaging/xbmc/src/interfaces
+xbmc/platform/android/service
+xbmc/cores/RetroPlayer
