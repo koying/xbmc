@@ -218,7 +218,7 @@ void CXBMCApp::onStart()
     intentFilter.addAction("android.intent.action.BATTERY_CHANGED");
     intentFilter.addAction("android.intent.action.SCREEN_ON");
     intentFilter.addAction("android.intent.action.HEADSET_PLUG");
-    intentFilter.addAction("android.intent.action.HDMI_AUDIO_PLUG");
+    intentFilter.addAction("android.media.action.HDMI_AUDIO_PLUG");
     intentFilter.addAction("android.intent.action.SCREEN_OFF");
     intentFilter.addAction("android.net.conn.CONNECTIVITY_CHANGE");
     registerReceiver(*m_broadcastReceiver, intentFilter);
