@@ -30,7 +30,9 @@
 #include <androidjni/Build.h>
 #include <androidjni/Environment.h>
 #include <androidjni/StatFs.h>
+#include <androidjni/IntentFilter.h>
 
+#include "platform/android/activity/XBMCApp.h"
 #include "Application.h"
 #include "AppParamParser.h"
 #include "CompileInfo.h"
@@ -39,6 +41,9 @@
 #include "platform/xbmc.h"
 #include "filesystem/SpecialProtocol.h"
 #include "utils/log.h"
+
+#include "ServiceBroker.h"
+#include "network/android/NetworkAndroid.h"
 
 // Audio Engine includes for Factory and interfaces
 #include "cores/AudioEngine/Interfaces/AE.h"
@@ -64,9 +69,12 @@ using namespace jni;
 CXBMCService::CXBMCService(jobject thiz)
   : CJNIBase()
   , CJNIService(thiz)
+  , m_headsetPlugged(false)
+  , m_hdmiPlugged(true)
 
 {
   m_xbmcserviceinstance = this;
+  m_broadcastReceiver.reset(new CJNIXBMCBroadcastReceiver(this));
 }
 
 int CXBMCService::android_printf(const char *format, ...)
@@ -144,6 +152,48 @@ void CXBMCService::run()
   catch(...)
   {
     android_printf("ERROR: Exception caught on main loop. Exiting");
+  }
+}
+
+void CXBMCService::onReceive(CJNIIntent intent)
+{
+  std::string action = intent.getAction();
+  CLog::Log(LOGDEBUG, "CXBMCService::onReceive - Got intent. Action: %s", action.c_str());
+  if (action == "android.intent.action.HEADSET_PLUG" ||
+    action == "android.bluetooth.a2dp.profile.action.CONNECTION_STATE_CHANGED")
+  {
+    bool newstate = m_headsetPlugged;
+    if (action == "android.intent.action.HEADSET_PLUG")
+      newstate = (intent.getIntExtra("state", 0) != 0);
+    else if (action == "android.bluetooth.a2dp.profile.action.CONNECTION_STATE_CHANGED")
+      newstate = (intent.getIntExtra("android.bluetooth.profile.extra.STATE", 0) == 2 /* STATE_CONNECTED */);
+
+    if (newstate != m_headsetPlugged)
+    {
+      m_headsetPlugged = newstate;
+      CServiceBroker::GetActiveAE().DeviceChange();
+    }
+  }
+  else if (action == "android.media.action.HDMI_AUDIO_PLUG")
+  {
+    bool newstate;
+    newstate = (intent.getIntExtra("android.media.extra.AUDIO_PLUG_STATE", 0) != 0);
+
+    if (newstate != m_hdmiPlugged)
+    {
+      CLog::Log(LOGDEBUG, "-- HDMI state: %s",  newstate ? "on" : "off");
+      m_hdmiPlugged = newstate;
+      CServiceBroker::GetActiveAE().DeviceChange();
+    }
+  }
+  else if (action == "android.net.conn.CONNECTIVITY_CHANGE")
+  {
+    if (g_application.IsInitialized())
+    {
+      CNetwork& net = CServiceBroker::GetNetwork();
+      CNetworkAndroid* netdroid = static_cast<CNetworkAndroid*>(&net);
+      netdroid->RetrieveInterfaces();
+    }
   }
 }
 
@@ -248,6 +298,17 @@ void CXBMCService::StartApplication()
 
   if( !m_SvcThreadCreated)
   {
+    // Some intent filters MUST be registered in code rather than through the manifest
+    CJNIIntentFilter intentFilter;
+    intentFilter.addAction("android.intent.action.HEADSET_PLUG");
+    intentFilter.addAction("android.bluetooth.a2dp.profile.action.CONNECTION_STATE_CHANGED");
+    intentFilter.addAction("android.media.action.HDMI_AUDIO_PLUG");
+    intentFilter.addAction("android.net.conn.CONNECTIVITY_CHANGE");
+    registerReceiver(*m_broadcastReceiver, intentFilter);
+
+    CJNIAudioManager audioManager(getSystemService("audio"));
+    m_headsetPlugged = audioManager.isWiredHeadsetOn() || audioManager.isBluetoothA2dpOn();
+
     // Register sink
     AE::CAESinkFactory::ClearSinks();
     CAESinkAUDIOTRACK::Register();
@@ -281,3 +342,14 @@ jboolean CXBMCService::_launchApplication(JNIEnv*, jobject thiz)
   m_xbmcserviceinstance->StartApplication();
   return g_application.IsInitialized();
 }
+
+bool CXBMCService::IsHeadsetPlugged()
+{
+  return m_headsetPlugged;
+}
+
+bool CXBMCService::IsHDMIPlugged()
+{
+  return m_hdmiPlugged;
+}
+

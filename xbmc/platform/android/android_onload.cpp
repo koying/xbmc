@@ -34,7 +34,7 @@
 #include "platform/android/activity/JNIXBMCJsonHandler.h"
 #include "platform/android/activity/JNIXBMCFile.h"
 #include "platform/android/activity/JNIXBMCInputDeviceListener.h"
-#include "platform/android/activity/JNIXBMCBroadcastReceiver.h"
+#include "platform/android/JNIXBMCBroadcastReceiver.h"
 #include "utils/StringUtils.h"
 #include "activity/XBMCApp.h"
 #include "service/XBMCService.h"

@@ -25,7 +25,7 @@
 #include <androidjni/jutils-details.hpp>
 #include <androidjni/Intent.h>
 
-#include "XBMCApp.h"
+#include "platform/android/service/XBMCService.h"
 #include "CompileInfo.h"
 
 using namespace jni;
@@ -36,7 +36,7 @@ CJNIXBMCBroadcastReceiver::CJNIXBMCBroadcastReceiver(CJNIBroadcastReceiver* rece
   : CJNIBase(s_className)
   , m_receiver(receiver)
 {
-  m_object = new_object(CXBMCApp::get()->getClassLoader().loadClass(GetDotClassName(GetClassName())));
+  m_object = new_object(CXBMCService::get()->getClassLoader().loadClass(GetDotClassName(GetClassName())));
   m_object.setGlobal();
 
   add_instance(m_object, this);

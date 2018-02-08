@@ -23,12 +23,16 @@
 
 #include <androidjni/Service.h>
 #include <androidjni/Context.h>
+#include <androidjni/BroadcastReceiver.h>
+#include <androidjni/Intent.h>
 
 #include "threads/Event.h"
 #include "threads/SharedSection.h"
+#include "platform/android/JNIXBMCBroadcastReceiver.h"
 
 class CXBMCService
     : public CJNIService
+    , public CJNIBroadcastReceiver
 {
   friend class XBMCApp;
 
@@ -45,11 +49,20 @@ public:
   static bool GetExternalStorage(std::string &path, const std::string &type = "");
   static bool GetStorageUsage(const std::string &path, std::string &usage);
 
+  // CJNIBroadcastReceiver interface
+  void onReceive(CJNIIntent intent) override;
+
+  bool IsHeadsetPlugged();
+  bool IsHDMIPlugged();
+
 protected:
   void run();
   void SetupEnv();
 
   CEvent m_appReady;
+  std::unique_ptr<jni::CJNIXBMCBroadcastReceiver> m_broadcastReceiver;
+  bool m_headsetPlugged;
+  bool m_hdmiPlugged;
 
 private:
   static CCriticalSection m_SvcMutex;

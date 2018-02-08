@@ -65,7 +65,7 @@ protected:
 
 class CNetworkAndroid : public CNetwork
 {
-  friend class CXBMCApp;
+  friend class CXBMCService;
 
 public:
   CNetworkAndroid();

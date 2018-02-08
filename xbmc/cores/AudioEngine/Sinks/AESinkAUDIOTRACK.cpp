@@ -336,7 +336,7 @@ bool CAESinkAUDIOTRACK::Initialize(AEAudioFormat &format, std::string &device)
      }
   }
 
-  if (m_format.m_dataFormat == AE_FMT_RAW && !CXBMCApp::IsHeadsetPlugged())
+  if (m_format.m_dataFormat == AE_FMT_RAW && !CXBMCService::get()->IsHeadsetPlugged())
   {
     m_passthrough = true;
     m_encoding = AEStreamFormatToATFormat(m_format.m_streamInfo.m_type);
@@ -865,7 +865,7 @@ void CAESinkAUDIOTRACK::EnumerateDevicesEx(AEDeviceInfoList &list, bool force)
 
   UpdateAvailablePCMCapabilities();
 
-  if (!CXBMCApp::IsHeadsetPlugged())
+  if (!CXBMCService::get()->IsHeadsetPlugged())
   {
     UpdateAvailablePassthroughCapabilities();
   }

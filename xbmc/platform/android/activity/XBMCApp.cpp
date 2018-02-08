@@ -75,7 +75,6 @@
 // Audio Engine includes for Factory and interfaces
 #include "cores/AudioEngine/Interfaces/AE.h"
 
-#include "ServiceBroker.h"
 #include "GUIInfoManager.h"
 #include "guiinfo/GUIInfoLabels.h"
 #include "platform/android/activity/IInputDeviceCallbacks.h"
@@ -119,8 +118,6 @@ ANativeWindow* CXBMCApp::m_window = NULL;
 int CXBMCApp::m_batteryLevel = 0;
 bool CXBMCApp::m_hasFocus = false;
 bool CXBMCApp::m_isResumed = false;
-bool CXBMCApp::m_headsetPlugged = false;
-bool CXBMCApp::m_hdmiPlugged = true;
 bool CXBMCApp::m_hasReqVisible = false;
 bool CXBMCApp::m_hasPIP = false;
 CCriticalSection CXBMCApp::m_applicationsMutex;
@@ -218,10 +215,9 @@ void CXBMCApp::onStart()
     CJNIIntentFilter intentFilter;
     intentFilter.addAction("android.intent.action.BATTERY_CHANGED");
     intentFilter.addAction("android.intent.action.SCREEN_ON");
-    intentFilter.addAction("android.intent.action.HEADSET_PLUG");
-    intentFilter.addAction("android.media.action.HDMI_AUDIO_PLUG");
     intentFilter.addAction("android.intent.action.SCREEN_OFF");
-    intentFilter.addAction("android.net.conn.CONNECTIVITY_CHANGE");
+    intentFilter.addAction("android.intent.action.DREAMING_STOPPED");
+    intentFilter.addAction("android.intent.action.MEDIA_BUTTON");
     registerReceiver(*m_broadcastReceiver, intentFilter);
 
     m_mediaSession.reset(new CJNIXBMCMediaSession());
@@ -236,9 +232,6 @@ void CXBMCApp::onResume()
 
   if (g_application.IsInitialized() && CServiceBroker::GetWinSystem().GetOSScreenSaver()->IsInhibited())
     EnableWakeLock(true);
-
-  CJNIAudioManager audioManager(getSystemService("audio"));
-  m_headsetPlugged = audioManager.isWiredHeadsetOn() || audioManager.isBluetoothA2dpOn();
 
   // Clear the applications cache. We could have installed/deinstalled apps
   {
@@ -448,11 +441,6 @@ void CXBMCApp::RequestPictureInPictureMode()
 
   enterPictureInPictureMode();
   CLog::Log(LOGDEBUG, "Entering PIP mode");
-}
-
-bool CXBMCApp::IsHeadsetPlugged()
-{
-  return m_headsetPlugged;
 }
 
 int CXBMCApp::SetBuffersGeometry(int width, int height, int format)
@@ -844,33 +832,6 @@ void CXBMCApp::onReceive(CJNIIntent intent)
     if (HasFocus())
       g_application.WakeUpScreenSaverAndDPMS();
   }
-  else if (action == "android.intent.action.HEADSET_PLUG" ||
-    action == "android.bluetooth.a2dp.profile.action.CONNECTION_STATE_CHANGED")
-  {
-    bool newstate = m_headsetPlugged;
-    if (action == "android.intent.action.HEADSET_PLUG")
-      newstate = (intent.getIntExtra("state", 0) != 0);
-    else if (action == "android.bluetooth.a2dp.profile.action.CONNECTION_STATE_CHANGED")
-      newstate = (intent.getIntExtra("android.bluetooth.profile.extra.STATE", 0) == 2 /* STATE_CONNECTED */);
-
-    if (newstate != m_headsetPlugged)
-    {
-      m_headsetPlugged = newstate;
-      CServiceBroker::GetActiveAE().DeviceChange();
-    }
-  }
-  else if (action == "android.media.action.HDMI_AUDIO_PLUG")
-  {
-    bool newstate;
-    newstate = (intent.getIntExtra("android.media.extra.AUDIO_PLUG_STATE", 0) != 0);
-
-    if (newstate != m_hdmiPlugged)
-    {
-      CLog::Log(LOGDEBUG, "-- HDMI state: %s",  newstate ? "on" : "off");
-      m_hdmiPlugged = newstate;
-      CServiceBroker::GetActiveAE().DeviceChange();
-    }
-  }
   else if (action == "android.intent.action.SCREEN_OFF")
   {
     if (m_playback_state & PLAYBACK_STATE_VIDEO)
@@ -909,15 +870,6 @@ void CXBMCApp::onReceive(CJNIIntent intent)
       CAndroidKey::XBMC_Key(keycode, XBMCK_MEDIA_REWIND, 0, 0, up);
     else if (keycode == CJNIKeyEvent::KEYCODE_MEDIA_STOP)
       CAndroidKey::XBMC_Key(keycode, XBMCK_MEDIA_STOP, 0, 0, up);
-  }
-  else if (action == "android.net.conn.CONNECTIVITY_CHANGE")
-  {
-    if (g_application.IsInitialized())
-    {
-      CNetwork& net = CServiceBroker::GetNetwork();
-      CNetworkAndroid* netdroid = static_cast<CNetworkAndroid*>(&net);
-      netdroid->RetrieveInterfaces();
-    }
   }
 }
 

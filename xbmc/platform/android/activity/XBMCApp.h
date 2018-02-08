@@ -46,7 +46,7 @@
 #include "JNIXBMCMainView.h"
 #include "JNIXBMCMediaSession.h"
 #include "JNIXBMCInputDeviceListener.h"
-#include "JNIXBMCBroadcastReceiver.h"
+#include "platform/android/JNIXBMCBroadcastReceiver.h"
 #include "platform/xbmc.h"
 #include "utils/Geometry.h"
 
@@ -270,8 +270,6 @@ private:
   static int m_batteryLevel;
   static bool m_hasFocus;
   static bool m_isResumed;
-  static bool m_headsetPlugged;
-  static bool m_hdmiPlugged;
   IInputDeviceCallbacks* m_inputDeviceCallbacks;
   IInputDeviceEventHandler* m_inputDeviceEventHandler;
   static bool m_hasReqVisible;
