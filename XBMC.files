@@ -7006,6 +7006,8 @@ xbmc/platform/MessagePrinter.h
 xbmc/platform/Platform.cpp
 xbmc/platform/Platform.h
 xbmc/platform/android
+xbmc/platform/android/JNIXBMCBroadcastReceiver.h
+xbmc/platform/android/JNIXBMCBroadcastReceiver.cpp
 xbmc/platform/android/activity
 xbmc/platform/android/activity/AndroidExtra.h
 xbmc/platform/android/activity/AndroidExtra.h
@@ -7081,8 +7083,6 @@ xbmc/platform/android/activity/JNIMainActivity.cpp
 xbmc/platform/android/activity/JNIMainActivity.h
 xbmc/platform/android/activity/JNIXBMCAudioManagerOnAudioFocusChangeListener.cpp
 xbmc/platform/android/activity/JNIXBMCAudioManagerOnAudioFocusChangeListener.h
-xbmc/platform/android/activity/JNIXBMCBroadcastReceiver.cpp
-xbmc/platform/android/activity/JNIXBMCBroadcastReceiver.h
 xbmc/platform/android/activity/JNIXBMCFile.cpp
 xbmc/platform/android/activity/JNIXBMCFile.h
 xbmc/platform/android/activity/JNIXBMCInputDeviceListener.cpp
