@@ -19,7 +19,6 @@ import java.util.Properties;
 import java.util.Enumeration;
 import java.util.ArrayList;
 
-import android.net.Uri;
 import android.Manifest;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -53,14 +52,13 @@ public class Splash extends Activity
 
   private static final int Uninitialized = 0;
   private static final int InError = 1;
-  private static final int Checking = 2;
-  private static final int ChecksDone = 3;
-  private static final int Clearing = 4;
-  private static final int Caching = 5;
-  private static final int CachingDone = 6;
-  private static final int CheckExternalStorage = 11;
-  private static final int WaitingStorageChecked = 7;
-  private static final int StorageChecked = 8;
+  private static final int CheckingPlatform = 2;
+  private static final int CheckPlatformDone = 3;
+  private static final int CheckStorage = 4;
+  private static final int CheckStorageDone = 5;
+  private static final int Clearing = 6;
+  private static final int Caching = 7;
+  private static final int CachingDone = 8;
   private static final int CheckingPermissions = 9;
   private static final int CheckingPermissionsDone = 10;
   private static final int DownloadingObb = 90;
@@ -117,16 +115,37 @@ public class Splash extends Activity
         case InError:
           showErrorDialog(mSplash, "Error", mErrorMsg);
           break;
+
+        case CheckingPlatform:
+          mSplash.mTextView.setText("Checking platform...");
+          mSplash.mProgress.setVisibility(View.INVISIBLE);
+          CheckPlatform();
+          break;
+
+        case CheckPlatformDone:
+          mSplash.mTextView.setText("Check platform OK...");
+          mSplash.mProgress.setVisibility(View.INVISIBLE);
+          sendEmptyMessage(CheckingPermissions);
+          break;
+
         case CheckingPermissions:
           mSplash.mTextView.setText("Asking permissions...");
           mSplash.mProgress.setVisibility(View.INVISIBLE);
-
-          requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+          mPermissionOK = CheckPermissions();
+          if (!mPermissionOK)
+          {
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                     PERMISSION_RESULT_CODE);
+          }
+          else
+          {
+            sendEmptyMessage(CheckingPermissionsDone);
+          }
           break;
+
         case CheckingPermissionsDone:
           if (mPermissionOK)
-            sendEmptyMessage(CheckExternalStorage);
+            sendEmptyMessage(CheckStorage);
           else
           {
             mErrorMsg = "Permission denied!! Exiting...";
@@ -134,74 +153,73 @@ public class Splash extends Activity
             break;
           }
           break;
-        case Checking:
+
+        case CheckStorage:
+          mSplash.mTextView.setText("Waiting for external storage...");
+          mSplash.mProgress.setVisibility(View.INVISIBLE);
+
+          if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()))
+          {
+            mExternalStorageChecked = true;
+            sendEmptyMessage(CheckStorageDone);
+          }
+          else
+          {
+            startWatchingExternalStorage();
+          }
           break;
+
+        case CheckStorageDone:
+          mSplash.mTextView.setText("External storage OK...");
+          mExternalStorageChecked = true;
+          mSplash.stopWatchingExternalStorage();
+
+          SetupEnvironment();
+          MigrateUserData();
+
+          if (mState == InError)
+          {
+            sendEmptyMessage(InError);
+          }
+
+          if (fXbmcHome.exists() && fXbmcHome.lastModified() >= fPackagePath.lastModified() && !mInstallLibs)
+          {
+            mState = CachingDone;
+            mCachingDone = true;
+
+            sendEmptyMessage(CachingDone);
+          }
+          else
+          {
+            new FillCache(mSplash).execute();
+          }
+          break;
+
         case Clearing:
           mSplash.mTextView.setText("Clearing cache...");
           mSplash.mProgress.setVisibility(View.INVISIBLE);
           break;
+
         case DownloadingObb:
           break;
         case DownloadObbDone:
-          new FillCache(mSplash).execute();
+          sendEmptyMessage(Caching);
           break;
+
         case Caching:
           if (!mCachingDone)
             new FillCache(mSplash).execute();
           else
             mStateMachine.sendEmptyMessage(CachingDone);
           break;
+
         case CachingDone:
           mSplash.mCachingDone = true;
           sendEmptyMessage(StartingService);
           break;
-        case CheckExternalStorage:
-          if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()))
-          {
-            mExternalStorageChecked = true;
-            sendEmptyMessage(StorageChecked);
-          }
-          else
-          {
-            startWatchingExternalStorage();
-            sendEmptyMessage(WaitingStorageChecked);
-          }
-          break;
-        case WaitingStorageChecked:
-          mSplash.mTextView.setText("Waiting for external storage...");
-          mSplash.mProgress.setVisibility(View.INVISIBLE);
-          break;
-        case StorageChecked:
-          mSplash.mTextView.setText("External storage OK...");
-          mExternalStorageChecked = true;
-          mSplash.stopWatchingExternalStorage();
-          if (mSplash.mCachingDone)
-            sendEmptyMessage(StartingService);
-          else
-          {
-            SetupEnvironment();
-            MigrateUserData();
 
-            if (mState == InError)
-            {
-              sendEmptyMessage(InError);
-            }
-            if (fXbmcHome.exists() && fXbmcHome.lastModified() >= fPackagePath.lastModified() && !mInstallLibs)
-            {
-              mState = CachingDone;
-              mCachingDone = true;
-
-              sendEmptyMessage(StartingService);
-            }
-            else
-            {
-              new FillCache(mSplash).execute();
-            }
-          }
-
-          break;
         case StartingService:
-          if (mServiceChecked)
+          if (Service.isStarted())
             sendEmptyMessage(StartingXBMC);
           else
           {
@@ -211,16 +229,19 @@ public class Splash extends Activity
             sendEmptyMessage(WaitingService);
           }
           break;
+
         case WaitingService:
           mSplash.mTextView.setText("Waiting for Service...");
           mSplash.mProgress.setVisibility(View.INVISIBLE);
           break;
+
         case StartingXBMC:
           stopWatchingService();
           mSplash.mTextView.setText("Starting @APP_NAME@...");
           mSplash.mProgress.setVisibility(View.INVISIBLE);
           mSplash.startXBMC();
           break;
+
         default:
           break;
       }
@@ -228,6 +249,80 @@ public class Splash extends Activity
   }
 
   private StateMachine mStateMachine = new StateMachine(this);
+
+  private void CheckPlatform()
+  {
+    mState = CheckPlatformDone;
+
+    String pkg_arch = "";
+    // Read the properties
+    try
+    {
+      Resources resources = this.getResources();
+      InputStream xbmcprop = resources.openRawResource(R.raw.xbmc);
+      Properties properties = new Properties();
+      properties.load(xbmcprop);
+      pkg_arch = properties.getProperty("native_arch");
+    }
+    catch (NotFoundException e)
+    {
+      mErrorMsg = "Cannot find properties file";
+      Log.e(TAG, mErrorMsg);
+      mState = InError;
+    }
+    catch (IOException e)
+    {
+      mErrorMsg = "Failed to open properties file";
+      Log.e(TAG, mErrorMsg);
+      mState = InError;
+    }
+
+    boolean arch_ok = false;
+    String[] abis = Build.SUPPORTED_ABIS;
+    for (int i = 0; i < abis.length; ++i)
+    {
+      Log.i(TAG, "ABI: " + abis[i]);
+      if (abis[i].equalsIgnoreCase(pkg_arch))
+      {
+        arch_ok = true;
+        //break;
+      }
+    }
+
+    if (!arch_ok)
+    {
+      mErrorMsg = "This package is not compatible with your device (" + pkg_arch + ").\nPlease check the <a href=\"http://wiki.@APP_NAME_LC@.tv/index.php?title=XBMC_for_Android_specific_FAQ\">@APP_NAME@ Android wiki</a> for more information.";
+      Log.e(TAG, mErrorMsg);
+      mState = InError;
+    }
+
+    if (mState != InError)
+    {
+      if (pkg_arch.equalsIgnoreCase("arm"))
+      {
+        // arm arch: check if the cpu supports neon
+        boolean ret = ParseCpuFeature();
+        //Log.d(TAG, "/proc/cpuinfo = " + mCpuinfo);
+        if (!ret)
+        {
+          mErrorMsg = "Error! Cannot parse CPU features.";
+          Log.e(TAG, mErrorMsg);
+          mState = InError;
+        }
+        else
+        {
+          ret = CheckCpuFeature("neon") || CheckCpuFeature("aarch64") || CheckCpuFeature("asimd");  // aarch64 is always neon; asimd feature also represents neon
+          if (!ret)
+          {
+            mErrorMsg = "This @APP_NAME@ package is not compatible with your device (NEON).\nPlease check the <a href=\"http://wiki.@APP_NAME_LC@.tv/index.php?title=XBMC_for_Android_specific_FAQ\">@APP_NAME@ Android wiki</a> for more information.";
+            Log.e(TAG, mErrorMsg);
+            mState = InError;
+          }
+        }
+      }
+    }
+    mStateMachine.sendEmptyMessage(mState);
+  }
 
   private class DownloadObb extends AsyncTask<String, Integer, Integer>
   {
@@ -355,7 +450,7 @@ public class Splash extends Activity
         mErrorMsg = "Cannot download obb.";
       }
 
-      mStateMachine.sendEmptyMessage(mState);
+      mStateMachine.sendEmptyMessage(DownloadObbDone);
     }
   }
 
@@ -800,7 +895,7 @@ public class Splash extends Activity
     Log.d(TAG, "External storage = " + Environment.getExternalStorageDirectory().getAbsolutePath() + "; state = " + state);
     if (Environment.MEDIA_MOUNTED.equals(state))
     {
-      mStateMachine.sendEmptyMessage(StorageChecked);
+      mStateMachine.sendEmptyMessage(CheckStorageDone);
     }
     else
     {
@@ -907,133 +1002,10 @@ public class Splash extends Activity
         return;
       }
 
-    mStateMachine.sendEmptyMessage(Checking);
-
-    String pkg_arch = "";
-    // Read the properties
-    try
-    {
-      Resources resources = this.getResources();
-      InputStream xbmcprop = resources.openRawResource(R.raw.xbmc);
-      Properties properties = new Properties();
-      properties.load(xbmcprop);
-      pkg_arch = properties.getProperty("native_arch");
-    }
-    catch (NotFoundException e)
-    {
-      mErrorMsg = "Cannot find properties file";
-      Log.e(TAG, mErrorMsg);
-      mState = InError;
-    }
-    catch (IOException e)
-    {
-      mErrorMsg = "Failed to open properties file";
-      Log.e(TAG, mErrorMsg);
-      mState = InError;
-    }
-
-    boolean arch_ok = false;
-    String[] abis = Build.SUPPORTED_ABIS;
-    for (int i = 0; i < abis.length; ++i)
-    {
-      Log.i(TAG, "ABI: " + abis[i]);
-      if (abis[i].equalsIgnoreCase(pkg_arch))
-      {
-        arch_ok = true;
-        //break;
-      }
-    }
-
-    if (!arch_ok)
-    {
-      mErrorMsg = "This package is not compatible with your device (" + pkg_arch + ").\nPlease check the <a href=\"http://wiki.@APP_NAME_LC@.tv/index.php?title=XBMC_for_Android_specific_FAQ\">@APP_NAME@ Android wiki</a> for more information.";
-      Log.e(TAG, mErrorMsg);
-      mState = InError;
-    }
-
-    if (mState != InError)
-    {
-      if (pkg_arch.equalsIgnoreCase("arm"))
-      {
-        // arm arch: check if the cpu supports neon
-        boolean ret = ParseCpuFeature();
-        //Log.d(TAG, "/proc/cpuinfo = " + mCpuinfo);
-        if (!ret)
-        {
-          mErrorMsg = "Error! Cannot parse CPU features.";
-          Log.e(TAG, mErrorMsg);
-          mState = InError;
-        }
-        else
-        {
-          ret = CheckCpuFeature("neon") || CheckCpuFeature("aarch64") || CheckCpuFeature("asimd");  // aarch64 is always neon; asimd feature also represents neon
-          if (!ret)
-          {
-            mErrorMsg = "This @APP_NAME@ package is not compatible with your device (NEON).\nPlease check the <a href=\"http://wiki.@APP_NAME_LC@.tv/index.php?title=XBMC_for_Android_specific_FAQ\">@APP_NAME@ Android wiki</a> for more information.";
-            Log.e(TAG, mErrorMsg);
-            mState = InError;
-          }
-        }
-      }
-    }
-
-    Log.d(TAG, "External storage = " + Environment.getExternalStorageDirectory().getAbsolutePath() + "; state = " + Environment.getExternalStorageState());
-    if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()))
-      mExternalStorageChecked = true;
-
-    if (Service.isStarted())
-      mServiceChecked = true;
-
-    mPermissionOK = CheckPermissions();
-    if (!mPermissionOK)
-    {
-      mState = CheckingPermissions;
-    }
-    else
-    {
-      if (mState != InError && mExternalStorageChecked)
-      {
-        mState = ChecksDone;
-
-        SetupEnvironment();
-        MigrateUserData();
-
-        if ((mState != DownloadingObb && mState != InError) && fXbmcHome.exists() && fXbmcHome.lastModified() >= fPackagePath.lastModified() && !mInstallLibs)
-        {
-          mState = CachingDone;
-          mCachingDone = true;
-        }
-      }
-    }
-
-    if ((mState != DownloadingObb && mState != InError) && mCachingDone && mExternalStorageChecked  && mPermissionOK && mServiceChecked)
-    {
-      startXBMC();
-      return;
-    }
+    mStateMachine.sendEmptyMessage(CheckingPlatform);
 
     setContentView(R.layout.activity_splash);
     mProgress = (ProgressBar) findViewById(R.id.progressBar1);
     mTextView = (TextView) findViewById(R.id.textView1);
-
-    if (mState == DownloadingObb || mState == InError || mState == CheckingPermissions)
-    {
-      mStateMachine.sendEmptyMessage(mState);
-      return;
-    }
-
-    if (!mExternalStorageChecked)
-    {
-      startWatchingExternalStorage();
-      mStateMachine.sendEmptyMessage(WaitingStorageChecked);
-    }
-    else
-    {
-      if (!mCachingDone)
-        new FillCache(this).execute();
-      else
-        mStateMachine.sendEmptyMessage(CachingDone);
-    }
   }
-
 }
