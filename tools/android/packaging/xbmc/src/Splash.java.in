@@ -63,7 +63,9 @@ public class Splash extends Activity
   private static final int CheckingPermissionsDone = 10;
   private static final int DownloadingObb = 90;
   private static final int DownloadObbDone = 91;
-  private static final int StartingService = 97;
+  private static final int StartingService = 92;
+  private static final int UpgradingDB = 95;
+  private static final int UpgradingAddons = 96;
   private static final int WaitingService = 98;
   private static final int StartingXBMC = 99;
 
@@ -89,8 +91,8 @@ public class Splash extends Activity
 
   private BroadcastReceiver mExternalStorageReceiver = null;
   private boolean mExternalStorageChecked = false;
-  private BroadcastReceiver mServiceReceiver = null;
-  private boolean mServiceChecked = false;
+  private Thread mSvcCheckThread = null;
+  private int mServiceStatus = 0;
   private boolean mCachingDone = false;
   private boolean mPermissionOK = false;
   private boolean mInstallLibs = false;
@@ -230,6 +232,16 @@ public class Splash extends Activity
           }
           break;
 
+        case UpgradingDB:
+          mSplash.mTextView.setText("Upgrading Database...");
+          mSplash.mProgress.setVisibility(View.INVISIBLE);
+          break;
+
+        case UpgradingAddons:
+          mSplash.mTextView.setText("Upgrading Addons...");
+          mSplash.mProgress.setVisibility(View.INVISIBLE);
+          break;
+
         case WaitingService:
           mSplash.mTextView.setText("Waiting for Service...");
           mSplash.mProgress.setVisibility(View.INVISIBLE);
@@ -237,6 +249,10 @@ public class Splash extends Activity
 
         case StartingXBMC:
           stopWatchingService();
+
+          Intent i = new Intent("@APP_PACKAGE@.SERVICE_STARTED");
+          sendBroadcast(i);
+
           mSplash.mTextView.setText("Starting @APP_NAME@...");
           mSplash.mProgress.setVisibility(View.INVISIBLE);
           mSplash.startXBMC();
@@ -930,34 +946,53 @@ public class Splash extends Activity
       unregisterReceiver(mExternalStorageReceiver);
   }
 
-  void updateServiceState()
-  {
-    mServiceChecked = Service.isStarted();
-    if (!mServiceChecked)
-      mStateMachine.sendEmptyMessage(StartingService);
-    else
-      mStateMachine.sendEmptyMessage(StartingXBMC);
-  }
-
   void startWatchingService()
   {
-    mServiceReceiver = new BroadcastReceiver()
+    mSvcCheckThread = new Thread()
     {
       @Override
-      public void onReceive(Context context, Intent intent)
+      public void run()
       {
-        updateServiceState();
+        try
+        {
+          while (!interrupted())
+          {
+            mServiceStatus = Service.getStatus();
+            if (mServiceStatus == Service.STATUS_UPGRADE_DB)
+              mStateMachine.sendEmptyMessage(UpgradingDB);
+            else if (mServiceStatus == Service.STATUS_UPGRADE_ADDONS)
+              mStateMachine.sendEmptyMessage(UpgradingAddons);
+            else if (mServiceStatus < Service.STATUS_STARTED)
+              mStateMachine.sendEmptyMessage(WaitingService);
+            else if (mServiceStatus == Service.STATUS_STARTED)
+            {
+              mStateMachine.sendEmptyMessage(StartingXBMC);
+              break;
+            }
+            try
+            {
+              sleep(1000);
+            }
+            catch (InterruptedException e)
+            {
+              return;
+            }
+          }
+        }
+        catch (Exception e)
+        {
+          e.printStackTrace();
+        }
       }
     };
-    IntentFilter filter = new IntentFilter();
-    filter.addAction("@APP_PACKAGE@.SERVICE_STARTED");
-    registerReceiver(mServiceReceiver, filter);
+
+    mSvcCheckThread.start();
   }
 
   void stopWatchingService()
   {
-    if (mServiceReceiver != null)
-      unregisterReceiver(mServiceReceiver);
+    if (mSvcCheckThread != null)
+      mSvcCheckThread.interrupt();
   }
 
   protected void startService()

@@ -56,6 +56,7 @@ CCriticalSection CXBMCService::m_SvcMutex;
 bool CXBMCService::m_SvcThreadCreated = false;
 pthread_t CXBMCService::m_SvcThread;
 CXBMCService* CXBMCService::m_xbmcserviceinstance = nullptr;
+int CXBMCService::m_status = 0;
 
 template<class T, void(T::*fn)()>
 void* thread_run(void* obj)
@@ -171,7 +172,8 @@ void CXBMCService::onReceive(CJNIIntent intent)
     if (newstate != m_headsetPlugged)
     {
       m_headsetPlugged = newstate;
-      CServiceBroker::GetActiveAE().DeviceChange();
+      if (m_status >= 50)
+        CServiceBroker::GetActiveAE().DeviceChange();
     }
   }
   else if (action == "android.media.action.HDMI_AUDIO_PLUG")
@@ -183,16 +185,20 @@ void CXBMCService::onReceive(CJNIIntent intent)
     {
       CLog::Log(LOGDEBUG, "-- HDMI state: %s",  newstate ? "on" : "off");
       m_hdmiPlugged = newstate;
-      CServiceBroker::GetActiveAE().DeviceChange();
+      if (m_status >= 50)
+        CServiceBroker::GetActiveAE().DeviceChange();
     }
   }
   else if (action == "android.net.conn.CONNECTIVITY_CHANGE")
   {
     if (g_application.IsInitialized())
     {
-      CNetwork& net = CServiceBroker::GetNetwork();
-      CNetworkAndroid* netdroid = static_cast<CNetworkAndroid*>(&net);
-      netdroid->RetrieveInterfaces();
+      if (m_status >= 50)
+      {
+        CNetwork& net = CServiceBroker::GetNetwork();
+        CNetworkAndroid* netdroid = static_cast<CNetworkAndroid*>(&net);
+        netdroid->RetrieveInterfaces();
+      }
     }
   }
 }
@@ -204,6 +210,7 @@ void CXBMCService::InitDirectories()
 
 void CXBMCService::Deinitialize()
 {
+  android_printf("CXBMCService::Deinitialize");
   stopSelf();
 }
 
@@ -298,6 +305,21 @@ void CXBMCService::StartApplication()
 
   if( !m_SvcThreadCreated)
   {
+    CJNIAudioManager audioManager(getSystemService("audio"));
+    m_headsetPlugged = audioManager.isWiredHeadsetOn() || audioManager.isBluetoothA2dpOn();
+
+    // Register sink
+    AE::CAESinkFactory::ClearSinks();
+    CAESinkAUDIOTRACK::Register();
+
+    m_status = 1;
+
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+    pthread_create(&m_SvcThread, &attr, thread_run<CXBMCService, &CXBMCService::run>, this);
+    pthread_attr_destroy(&attr);
+
     // Some intent filters MUST be registered in code rather than through the manifest
     CJNIIntentFilter intentFilter;
     intentFilter.addAction("android.intent.action.HEADSET_PLUG");
@@ -306,41 +328,26 @@ void CXBMCService::StartApplication()
     intentFilter.addAction("android.net.conn.CONNECTIVITY_CHANGE");
     registerReceiver(*m_broadcastReceiver, intentFilter);
 
-    CJNIAudioManager audioManager(getSystemService("audio"));
-    m_headsetPlugged = audioManager.isWiredHeadsetOn() || audioManager.isBluetoothA2dpOn();
-
-    // Register sink
-    AE::CAESinkFactory::ClearSinks();
-    CAESinkAUDIOTRACK::Register();
-
-    pthread_attr_t attr;
-    pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-    pthread_create(&m_SvcThread, &attr, thread_run<CXBMCService, &CXBMCService::run>, this);
-    pthread_attr_destroy(&attr);
-
     m_SvcThreadCreated = true;
-  }
-  // Wait for the service to settle
-  int nb = 0;
-  while(!g_application.IsInitialized() && nb < 30)
-  {
-    usleep(1 * 1000000);
-    nb++;
   }
 }
 
 void CXBMCService::StopApplication()
 {
   pthread_join(m_SvcThread, NULL);
+  m_status = 0;
 }
 
-jboolean CXBMCService::_launchApplication(JNIEnv*, jobject thiz)
+void CXBMCService::_launchApplication(JNIEnv*, jobject thiz)
 {
   jobject o = (jobject)xbmc_jnienv()->NewGlobalRef(thiz);
   m_xbmcserviceinstance = new CXBMCService(o);
   m_xbmcserviceinstance->StartApplication();
-  return g_application.IsInitialized();
+}
+
+jint CXBMCService::_getStatus(JNIEnv*, jobject thiz)
+{
+  return m_status;
 }
 
 bool CXBMCService::IsHeadsetPlugged()

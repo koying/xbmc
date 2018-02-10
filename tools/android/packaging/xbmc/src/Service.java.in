@@ -5,15 +5,31 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.IBinder;
+import android.util.Log;
 
 public class Service extends android.app.Service
 {
-  native boolean _launchApplication();
+  private static final String TAG = "@APP_NAME@Service";
 
-  static private Boolean m_isStarted = false;
-  public static Boolean isStarted()
+  native void _launchApplication();
+  native static int _getStatus();
+
+  public static int STATUS_STARTING = 1;
+  public static int STATUS_UPGRADE_DB = 25;
+  public static int STATUS_UPGRADE_ADDONS = 30;
+  public static int STATUS_STARTED = 50;
+
+  static private int m_status = 0;
+  public static int getStatus()
   {
-    return m_isStarted;
+    if (m_status >= STATUS_STARTING)
+      m_status = _getStatus();
+    return m_status;
+  }
+
+  public static boolean isStarted()
+  {
+    return m_status >= STATUS_STARTED;
   }
 
   public Service()
@@ -23,6 +39,7 @@ public class Service extends android.app.Service
   @Override
   public void onCreate()
   {
+    Log.d(TAG, "onCreate: ");
     System.loadLibrary("@APP_NAME_LC@");
     super.onCreate();
   }
@@ -30,9 +47,13 @@ public class Service extends android.app.Service
   @Override
   public int onStartCommand(Intent intent, int flags, int startId)
   {
-    if (!m_isStarted)
-      m_isStarted =_launchApplication();
-    if (m_isStarted)
+    Log.d(TAG, "onStartCommand: ");
+    if (m_status < STATUS_STARTED)
+    {
+      _launchApplication();
+      m_status = STATUS_STARTING;
+    }
+    if (m_status >= STATUS_STARTED)
     {
       Intent i = new Intent("@APP_PACKAGE@.SERVICE_STARTED");
       sendBroadcast(i);
@@ -56,6 +77,9 @@ public class Service extends android.app.Service
   @Override
   public void onDestroy()
   {
+    Log.d(TAG, "onDestroy: ");
+    m_status = 0;
+
     Intent i = new Intent("@APP_PACKAGE@.SERVICE_STOPPED");
     sendBroadcast(i);
 

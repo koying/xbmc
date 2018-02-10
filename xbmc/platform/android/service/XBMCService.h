@@ -40,7 +40,8 @@ public:
   CXBMCService(jobject thiz);
 
   static CXBMCService* get() { return m_xbmcserviceinstance; }
-  static jboolean _launchApplication(JNIEnv*, jobject thiz);
+  static void _launchApplication(JNIEnv*, jobject thiz);
+  static jint _getStatus(JNIEnv*, jobject thiz);
   int android_printf(const char* format...);
 
   void InitDirectories();
@@ -48,6 +49,7 @@ public:
 
   static bool GetExternalStorage(std::string &path, const std::string &type = "");
   static bool GetStorageUsage(const std::string &path, std::string &usage);
+  static void SetStatus(int status) { m_status = status; }
 
   // CJNIBroadcastReceiver interface
   void onReceive(CJNIIntent intent) override;
@@ -69,6 +71,7 @@ private:
   static bool m_SvcThreadCreated;
   static pthread_t m_SvcThread;
   static CXBMCService* m_xbmcserviceinstance;
+  static int m_status;
 
   void StartApplication();
   void StopApplication();

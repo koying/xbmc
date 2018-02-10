@@ -1137,7 +1137,12 @@ bool CApplication::Initialize()
   while (!event.WaitMSec(1000))
   {
     if (databaseManager.IsUpgrading())
+    {
       CServiceBroker::GetRenderSystem().ShowSplash(std::string(iDots, ' ') + localizedStr + std::string(iDots, '.'));
+#ifdef TARGET_ANDROID
+      CXBMCService::SetStatus(25);
+#endif
+    }
 
     if (iDots == 3)
       iDots = 1;
@@ -1145,6 +1150,9 @@ bool CApplication::Initialize()
       ++iDots;
   }
   CServiceBroker::GetRenderSystem().ShowSplash("");
+#ifdef TARGET_ANDROID
+      CXBMCService::SetStatus(26);
+#endif
 
   StartServices();
 
@@ -1166,13 +1174,21 @@ bool CApplication::Initialize()
   while (!event.WaitMSec(1000))
   {
     if (isMigratingAddons)
+    {
       CServiceBroker::GetRenderSystem().ShowSplash(std::string(iDots, ' ') + localizedStr + std::string(iDots, '.'));
+#ifdef TARGET_ANDROID
+      CXBMCService::SetStatus(30);
+#endif
+    }
     if (iDots == 3)
       iDots = 1;
     else
       ++iDots;
   }
   CServiceBroker::GetRenderSystem().ShowSplash("");
+#ifdef TARGET_ANDROID
+  CXBMCService::SetStatus(31);
+#endif
   m_incompatibleAddons = incompatibleAddons;
 
   g_windowManager.CreateWindows();
@@ -1285,6 +1301,9 @@ bool CApplication::Initialize()
     g_windowManager.SendThreadMessage(msg);
   }
   m_bInitializing = false;
+#ifdef TARGET_ANDROID
+  CXBMCService::SetStatus(50);
+#endif
 
   return true;
 }

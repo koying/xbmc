@@ -72,7 +72,8 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved)
   {
     JNINativeMethod methods[] =
     {
-      {"_launchApplication", "()Z", (void*)&CXBMCService::_launchApplication},
+      {"_launchApplication", "()V", (void*)&CXBMCService::_launchApplication},
+      {"_getStatus", "()I", (void*)&CXBMCService::_getStatus},
     };
     env->RegisterNatives(cKASvc, methods, sizeof(methods)/sizeof(methods[0]));
   }
