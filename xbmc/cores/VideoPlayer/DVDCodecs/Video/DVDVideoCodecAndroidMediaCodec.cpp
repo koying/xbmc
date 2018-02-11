@@ -483,7 +483,7 @@ bool CDVDVideoCodecAndroidMediaCodec::Open(CDVDStreamInfo &hints, CDVDCodecOptio
           // No known h/w decoder supporting Hi10P
           goto FAIL;
       }
-      if (CJNIBuild::DEVICE == "foster" && hints.stereo_mode != "mono")   // SATV buggy with HTAB/HSBS
+      if (CJNIBuild::DEVICE == "foster" && !hints.stereo_mode.empty())   // SATV buggy with HTAB/HSBS
       {
         CLog::Log(LOGERROR, "CDVDVideoCodecAndroidMediaCodec::Open - SATV does not support stereo mode (%s)", hints.stereo_mode.c_str());
         return false;
