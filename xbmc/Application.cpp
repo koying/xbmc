@@ -2520,11 +2520,11 @@ void CApplication::OnApplicationMessage(ThreadMessage* pMsg)
   case TMSG_DISPLAY_DESTROY:
     if (IsGUICreated())
     {
-      if (m_ServiceManager)
-        m_ServiceManager->DeinitStageThree();
-
       DestroyGUI();
       SetRenderGUI(false);
+
+      if (m_ServiceManager)
+        m_ServiceManager->DeinitStageThree();
     }
     break;
 #endif
