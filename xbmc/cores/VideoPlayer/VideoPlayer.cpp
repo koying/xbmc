@@ -1363,6 +1363,10 @@ void CVideoPlayer::Prepare()
   UpdatePlayState(0);
 
   SetCaching(CACHESTATE_FLUSH);
+
+  m_outboundEvents->Submit([this]() {
+    m_callback.OnPlayBackStarted(m_item);
+  });
 }
 
 void CVideoPlayer::Process()
@@ -2537,10 +2541,6 @@ void CVideoPlayer::HandleMessages()
       m_playerOptions = msg.GetOptions();
 
       m_processInfo->SetPlayTimes(0,0,0,0);
-
-      m_outboundEvents->Submit([this]() {
-        m_callback.OnPlayBackStarted(m_item);
-      });
 
       FlushBuffers(DVD_NOPTS_VALUE, true, true);
       m_renderManager.Flush(false);
