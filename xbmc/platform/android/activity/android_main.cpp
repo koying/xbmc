@@ -20,6 +20,7 @@
 
 #include <stdlib.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include <android_native_app_glue.h>
 
