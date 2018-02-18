@@ -103,6 +103,7 @@ const CWindowTranslator::WindowMapByName CWindowTranslator::WindowMappingByName 
     { "audiodspmanager"          , WINDOW_DIALOG_AUDIO_DSP_MANAGER },
     { "osdaudiodspsettings"      , WINDOW_DIALOG_AUDIO_DSP_OSD_SETTINGS },
     { "videobookmarks"           , WINDOW_DIALOG_VIDEO_BOOKMARKS },
+    { "videothumbprogress"       , WINDOW_DIALOG_VIDEO_THUMBPROGRESS },
     { "filebrowser"              , WINDOW_DIALOG_FILE_BROWSER },
     { "networksetup"             , WINDOW_DIALOG_NETWORK_SETUP },
     { "mediasource"              , WINDOW_DIALOG_MEDIA_SOURCE },
