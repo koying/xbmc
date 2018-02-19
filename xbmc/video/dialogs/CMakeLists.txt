@@ -5,7 +5,9 @@ set(SOURCES GUIDialogAudioSubtitleSettings.cpp
             GUIDialogVideoBookmarks.cpp
             GUIDialogVideoInfo.cpp
             GUIDialogVideoOSD.cpp
-            GUIDialogVideoSettings.cpp)
+            GUIDialogVideoSettings.cpp
+            ProgressThumbnailer.cpp
+            )
 
 set(HEADERS GUIDialogAudioSubtitleSettings.h
             GUIDialogFullScreenInfo.h
@@ -14,7 +16,9 @@ set(HEADERS GUIDialogAudioSubtitleSettings.h
             GUIDialogVideoBookmarks.h
             GUIDialogVideoInfo.h
             GUIDialogVideoOSD.h
-            GUIDialogVideoSettings.h)
+            GUIDialogVideoSettings.h
+            ProgressThumbnailer.h
+            )
 
 if(OPENGL_FOUND OR CORE_SYSTEM_NAME STREQUAL windows OR CORE_SYSTEM_NAME STREQUAL windowsstore)
   list(APPEND SOURCES GUIDialogCMSSettings.cpp)
