@@ -18,6 +18,9 @@
  *
  */
 
+#include <string>
+#include <vector>
+
 #include "GUIDialogVideoBookmarks.h"
 #include "video/VideoDatabase.h"
 #include "Application.h"
@@ -44,8 +47,8 @@
 #include "TextureCache.h"
 #include "messaging/ApplicationMessenger.h"
 #include "settings/Settings.h"
-#include <string>
-#include <vector>
+
+#include "ProgressThumbnailer.h"
 
 using namespace KODI::MESSAGING;
 
@@ -112,16 +115,30 @@ bool CGUIDialogVideoBookmarks::OnMessage(CGUIMessage& message)
         Update();
       }
       else if (m_viewControl.HasControl(iControl))  // list/thumb control
-      {
+      {        
         int iItem = m_viewControl.GetSelectedItem();
+        if (iItem < 0 || iItem >= m_vecItems->Size() || !g_application.GetAppPlayer().HasPlayer())
+          return true;
+
+        CFileItemPtr fileItem = m_vecItems->Get(iItem);
+
         int iAction = message.GetParam1();
-        if (iAction == ACTION_DELETE_ITEM)
+        bool isBookmark = fileItem->GetProperty("isbookmark").asBoolean();
+        bool isChapter = fileItem->GetProperty("ischapter").asBoolean();
+
+        if (isBookmark && iAction == ACTION_DELETE_ITEM)
         {
-          Delete(iItem);
+          Delete(fileItem);
         }
         else if (iAction == ACTION_SELECT_ITEM || iAction == ACTION_MOUSE_LEFT_CLICK)
         {
-          GotoBookmark(iItem);
+          if (isChapter)
+          {
+
+          }
+          else
+            GotoBookmark(fileItem);
+
         }
       }
     }
@@ -187,23 +204,26 @@ void CGUIDialogVideoBookmarks::OnPopupMenu(int item)
   (*m_vecItems)[item]->Select(false);
   
   if (button == 1)
-    Delete(item);
+  {
+    CFileItemPtr fileItem = m_vecItems->Get(item);
+    Delete(fileItem);
+  }
 }
 
-void CGUIDialogVideoBookmarks::Delete(int item)
+void CGUIDialogVideoBookmarks::Delete(const CFileItemPtr& fileItem)
 {
-  if ( item>=0 && (unsigned)item < m_bookmarks.size() )
-  {
-    CVideoDatabase videoDatabase;
-    videoDatabase.Open();
-    std::string path(g_application.CurrentFile());
-    if (g_application.CurrentFileItem().HasProperty("original_listitem_url") &&
-       !URIUtils::IsVideoDb(g_application.CurrentFileItem().GetProperty("original_listitem_url").asString()))
-      path = g_application.CurrentFileItem().GetProperty("original_listitem_url").asString();
-    videoDatabase.ClearBookMarkOfFile(path, m_bookmarks[item], m_bookmarks[item].type);
-    videoDatabase.Close();
-    CUtil::DeleteVideoDatabaseDirectoryCache();
-  }
+  int item = fileItem->GetProperty("bookmarkidx").isInteger();
+
+  CVideoDatabase videoDatabase;
+  videoDatabase.Open();
+  std::string path(g_application.CurrentFile());
+  if (g_application.CurrentFileItem().HasProperty("original_listitem_url") &&
+      !URIUtils::IsVideoDb(g_application.CurrentFileItem().GetProperty("original_listitem_url").asString()))
+    path = g_application.CurrentFileItem().GetProperty("original_listitem_url").asString();
+  videoDatabase.ClearBookMarkOfFile(path, m_bookmarks[item], m_bookmarks[item].type);
+  videoDatabase.Close();
+  CUtil::DeleteVideoDatabaseDirectoryCache();
+
   Update();
 }
 
@@ -265,6 +285,7 @@ void CGUIDialogVideoBookmarks::OnRefreshList()
     item->SetProperty("resumepoint", m_bookmarks[i].timeInSeconds);
     item->SetProperty("playerstate", m_bookmarks[i].playerState);
     item->SetProperty("isbookmark", "true");
+    item->SetProperty("bookmarkidx", i);
     items.push_back(item);
   }
 
@@ -363,12 +384,8 @@ void CGUIDialogVideoBookmarks::Clear()
   m_vecItems->Clear();
 }
 
-void CGUIDialogVideoBookmarks::GotoBookmark(int item)
+void CGUIDialogVideoBookmarks::GotoBookmark(const CFileItemPtr& fileItem)
 {
-  if (item < 0 || item >= m_vecItems->Size() || !g_application.GetAppPlayer().HasPlayer())
-    return;
-
-  CFileItemPtr fileItem = m_vecItems->Get(item);
   int chapter = static_cast<int>(fileItem->GetProperty("chapter").asInteger());
   if (chapter <= 0)
   {

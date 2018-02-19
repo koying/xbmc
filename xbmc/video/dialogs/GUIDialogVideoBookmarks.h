@@ -26,6 +26,7 @@
 #include "utils/JobManager.h"
 
 class CFileItemList;
+class CProgressThumbnailer;
 
 class CGUIDialogVideoBookmarks : public CGUIDialog, public CJobQueue
 {
@@ -62,11 +63,11 @@ public:
   
   void Update();
 protected:
-  void GotoBookmark(int iItem);
+  void GotoBookmark(const CFileItemPtr& fileItem);
   void ClearBookmarks();
   static bool AddEpisodeBookmark();
   static bool AddBookmark(CVideoInfoTag *tag=NULL);
-  void Delete(int item);
+  void Delete(const CFileItemPtr& fileItem);
   void Clear();
   void OnRefreshList();
   void OnPopupMenu(int item);
@@ -85,4 +86,5 @@ private:
   std::string m_filePath;
   CCriticalSection m_refreshSection;
   MAPJOBSCHAPS m_mapJobsChapter;
+  std::unique_ptr<CProgressThumbnailer> m_thumbnailer;
 };

@@ -5287,6 +5287,10 @@ xbmc/video/dialogs/GUIDialogVideoSettings.h
 xbmc/video/Episode.h
 xbmc/video/GUIViewStateVideo.cpp
 xbmc/video/GUIViewStateVideo.h
+xbmc/video/dialogs/GUIDialogVideoThumbProgress.cpp
+xbmc/video/dialogs/GUIDialogVideoThumbProgress.h
+xbmc/video/dialogs/ProgressThumbnailer.cpp
+xbmc/video/dialogs/ProgressThumbnailer.h
 xbmc/video/jobs
 xbmc/video/jobs/CMakeLists.txt
 xbmc/video/jobs/VideoLibraryCleaningJob.cpp
