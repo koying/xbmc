@@ -39,6 +39,7 @@ public:
   void OnWindowLoaded() override;
   void OnWindowUnload() override;
   bool OnAction(const CAction &action) override;
+  bool OnBack(int actionID) override;
 
   /*!
    \brief Creates a bookmark of the currently playing video file.
@@ -69,6 +70,7 @@ protected:
   static bool AddBookmark(CVideoInfoTag *tag=NULL);
   void Delete(const CFileItemPtr& fileItem);
   void Clear();
+  void ExpandChapter(int item);
   void OnRefreshList();
   void OnPopupMenu(int item);
   CGUIControl *GetFirstFocusableControl(int id) override;
@@ -81,10 +83,12 @@ protected:
 
 private:
   void UpdateItem(unsigned int chapterIdx);
+  void UpdateTemp(int seektime);
 
   int m_jobsStarted;
   std::string m_filePath;
   CCriticalSection m_refreshSection;
   MAPJOBSCHAPS m_mapJobsChapter;
   std::unique_ptr<CProgressThumbnailer> m_thumbnailer;
+  int m_level;
 };

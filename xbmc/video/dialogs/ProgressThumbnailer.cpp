@@ -293,7 +293,7 @@ void CProgressThumbnailer::QueueExtractThumb(int seekTime)
         CPicture::CacheTexture(pOutBuf, nWidth, nHeight, nWidth * 4, 0, nWidth, nHeight, outfile);
         CLog::Log(LOGDEBUG, "%s - created thumb %s", __FUNCTION__, outfile.c_str());
 
-        CGUIMessage m(GUI_MSG_REFRESH_LIST, m_controlId, 0, 1, seekTime);
+        CGUIMessage m(GUI_MSG_REFRESH_LIST, m_controlId, 0, 2, seekTime);
         CApplicationMessenger::GetInstance().SendGUIMessage(m);
       }
       av_free(pOutBuf);
