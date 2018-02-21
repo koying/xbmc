@@ -129,11 +129,21 @@ void CRenderCaptureDroid::ReadOut()
       int iHeight = image.getHeight();
 
       std::vector<jni::CJNIImagePlane> planes = image.getPlanes();
+      if (planes.empty())
+      {
+        SetState(CAPTURESTATE_FAILED);
+        return;
+      }
       CJNIByteBuffer bytebuffer = planes[0].getBuffer();
 
       struct SwsContext *context = sws_getContext(iWidth, iHeight, AV_PIX_FMT_RGBA,
                                                   m_width, m_height, AV_PIX_FMT_BGRA,
                                                   SWS_FAST_BILINEAR, NULL, NULL, NULL);
+      if (!context)
+      {
+        SetState(CAPTURESTATE_FAILED);
+        return;
+      }
 
       void *buf_ptr = xbmc_jnienv()->GetDirectBufferAddress(bytebuffer.get_raw());
 
@@ -143,11 +153,8 @@ void CRenderCaptureDroid::ReadOut()
       uint8_t *dst[] = { m_pixels, 0, 0, 0 };
       int     dstStride[] = { (int)m_width * 4, 0, 0, 0 };
 
-      if (context)
-      {
-        sws_scale(context, src, srcStride, 0, iHeight, dst, dstStride);
-        sws_freeContext(context);
-      }
+      sws_scale(context, src, srcStride, 0, iHeight, dst, dstStride);
+      sws_freeContext(context);
 
       image.close();
       SetState(CAPTURESTATE_DONE);
