@@ -93,6 +93,33 @@ bool CGUIDialogVideoOSD::OnMessage(CGUIMessage& message)
       Close();
     }
     break;
+  case GUI_MSG_WINDOW_INIT:  // fired when OSD is hidden
+    {
+      std::string subdialog = message.GetStringParam(0);
+      if (!subdialog.empty())
+      {
+        std::transform(subdialog.begin(), subdialog.end(), subdialog.begin(), ::tolower);
+        int subdialogId = WINDOW_INVALID;
+        if (subdialog == "bookmarks")
+          subdialogId = WINDOW_DIALOG_VIDEO_BOOKMARKS;
+        else if (subdialog == "videosettings")
+          subdialogId = WINDOW_DIALOG_VIDEO_OSD_SETTINGS;
+        else if (subdialog == "audiosettings")
+          subdialogId = WINDOW_DIALOG_AUDIO_OSD_SETTINGS;
+        else if (subdialog == "audiodspsettings")
+          subdialogId = WINDOW_DIALOG_AUDIO_DSP_OSD_SETTINGS;
+        else if (subdialog == "subtitlesettings")
+          subdialogId = WINDOW_DIALOG_SUBTITLE_OSD_SETTINGS;
+
+        if (subdialogId != WINDOW_INVALID)
+        {
+          CGUIDialog *pDialog = g_windowManager.GetDialog(subdialogId);
+          if (pDialog && !pDialog->IsDialogRunning())
+            pDialog->Open();
+        }
+      }
+    }
+    break;
   case GUI_MSG_WINDOW_DEINIT:  // fired when OSD is hidden
     {
       // Remove our subdialogs if visible
