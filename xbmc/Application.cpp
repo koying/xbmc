@@ -2847,11 +2847,11 @@ bool CApplication::Cleanup()
   {
     StopPlaying();
 
-    if (m_ServiceManager)
-      m_ServiceManager->DeinitStageThree();
-
     CLog::Log(LOGNOTICE, "unload skin");
     UnloadSkin();
+
+    if (m_ServiceManager)
+      m_ServiceManager->DeinitStageThree();
 
     // stop all remaining scripts; must be done after skin has been unloaded,
     // not before some windows still need it when deinitializing during skin
