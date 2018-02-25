@@ -1198,13 +1198,13 @@ void CXBMCApp::CalculateGUIRatios()
     return;
 
   RESOLUTION_INFO res_info = g_graphicsContext.GetResInfo();
+
   float curRatio = (float)res_info.iWidth / res_info.iHeight;
   float newRatio = (float)m_surface_rect.Width() / m_surface_rect.Height();
-
   res_info.fPixelRatio = newRatio / curRatio;
   g_graphicsContext.SetResInfo(g_graphicsContext.GetVideoResolution(), res_info);
 
-  CRect gui = CRect(0, 0, res_info.iWidth, res_info.iHeight);
+  CRect gui = CRect(0, 0, res_info.iScreenWidth, res_info.iScreenHeight);
   m_droid2guiRatio.x1 = m_surface_rect.x1;
   m_droid2guiRatio.y1 = m_surface_rect.y1;
   m_droid2guiRatio.x2 = gui.Width() / (double)m_surface_rect.Width();
