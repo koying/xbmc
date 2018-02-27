@@ -455,11 +455,6 @@ void CXBMCApp::RequestPictureInPictureMode()
   CLog::Log(LOGDEBUG, "Entering PIP mode");
 }
 
-bool CXBMCApp::IsHDMIPlugged()
-{
-  return m_hdmiPlugged;
-}
-
 bool CXBMCApp::IsHeadsetPlugged()
 {
   return m_headsetPlugged;
