@@ -61,14 +61,12 @@ set(package_files strings.xml
                   src/Main.java
                   src/XBMCBroadcastReceiver.java
                   src/XBMCJsonRPC.java
-                  src/XBMCMainView.java
                   src/XBMCMediaSession.java
                   src/XBMCRecommendationBuilder.java
                   src/XBMCSearchableActivity.java
                   src/XBMCSettingsContentObserver.java
                   src/XBMCProjection.java
                   src/XBMCProperties.java
-                  src/XBMCVideoView.java
                   src/XBMCFile.java
                   src/channels/SyncChannelJobService.java
                   src/channels/SyncProgramsJobService.java
@@ -94,6 +92,8 @@ set(package_files strings.xml
                   src/content/XBMCMediaContentProvider.java
                   src/content/XBMCContentProvider.java
                   src/content/XBMCYTDLContentProvider.java
+                  src/views/XBMCMainView.java
+                  src/views/XBMCVideoView.java
                   )
 foreach(file IN LISTS package_files)
   configure_file(${CMAKE_SOURCE_DIR}/tools/android/packaging/xbmc/${file}.in
