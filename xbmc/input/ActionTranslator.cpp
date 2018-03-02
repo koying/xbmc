@@ -52,7 +52,6 @@ static const std::map<ActionName, ActionID> ActionMappings =
     { "skipnext"                 , ACTION_NEXT_ITEM },
     { "skipprevious"             , ACTION_PREV_ITEM },
     { "fullscreen"               , ACTION_SHOW_GUI },
-    { "pictureinpicture"         , ACTION_PICTUREINPICTURE },
     { "stepforward"              , ACTION_STEP_FORWARD },
     { "stepback"                 , ACTION_STEP_BACK },
     { "bigstepforward"           , ACTION_BIG_STEP_FORWARD },
