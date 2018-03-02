@@ -26,7 +26,8 @@ public class XBMCVideoView extends SurfaceView implements
   private static final String TAG = "XBMCVideoPlayView";
 
   public boolean mIsCreated = false;
-  private RelativeLayout mVideoLayout = null;
+  private RelativeLayout mMainLayout = null;
+  private VideoFrameLayout mVideoLayout = null;
 
   public static XBMCVideoView createVideoView()
   {
@@ -59,7 +60,7 @@ public class XBMCVideoView extends SurfaceView implements
     getHolder().addCallback(this);
     getHolder().setFormat(PixelFormat.TRANSLUCENT);
 
-    mVideoLayout = (RelativeLayout) Main.MainActivity.findViewById(R.id.VideoLayout);
+    mMainLayout = Main.MainActivity.findViewById(R.id.MainLayout);
   }
 
   public void add()
@@ -69,8 +70,10 @@ public class XBMCVideoView extends SurfaceView implements
       @Override
       public void run()
       {
+        mVideoLayout = new VideoFrameLayout(Main.MainActivity);
         RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT);
         mVideoLayout.addView(XBMCVideoView.this, layoutParams);
+        mMainLayout.addView(mVideoLayout);
       }
     });
   }
@@ -82,7 +85,8 @@ public class XBMCVideoView extends SurfaceView implements
       @Override
       public void run()
       {
-        mVideoLayout.removeView(XBMCVideoView.this);
+        if (mVideoLayout != null)
+          mMainLayout.removeView(mVideoLayout);
       }
     });
   }
@@ -102,6 +106,8 @@ public class XBMCVideoView extends SurfaceView implements
 
   public void setSurfaceRect(final int left, final int top, final int right, final int bottom)
   {
+    mVideoLayout.setSurfaceRect(left, top, right, bottom);
+/*
     Main.MainActivity.runOnUiThread(new Runnable()
     {
       @Override
@@ -114,7 +120,7 @@ public class XBMCVideoView extends SurfaceView implements
           // For zoom, we adjust the margins of the layout containing the surface to achieve the desired result
           // Note: This assume margins can be negative for positive zoom levels. This doesn't work on Philips/Sony TV's
           RelativeLayout.LayoutParams mp = new RelativeLayout.LayoutParams(getLayoutParams());
-          mp.setMargins(left, top, mVideoLayout.getWidth() - right, mVideoLayout.getHeight() - bottom);
+          mp.setMargins(left, top, mMainLayout.getWidth() - right, mMainLayout.getHeight() - bottom);
           setLayoutParams(mp);
           requestLayout();
         }
@@ -124,6 +130,7 @@ public class XBMCVideoView extends SurfaceView implements
         }
       }
     });
+*/
   }
 
 

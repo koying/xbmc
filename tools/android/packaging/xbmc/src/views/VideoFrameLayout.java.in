@@ -1,0 +1,56 @@
+package @APP_PACKAGE@.views;
+
+import android.content.Context;
+import android.util.AttributeSet;
+import android.widget.FrameLayout;
+import android.widget.RelativeLayout;
+
+import @APP_PACKAGE@.Main;
+
+/**
+ * Created by cbro on 2/27/18.
+ */
+
+public class VideoFrameLayout extends FrameLayout
+{
+  private int m_top;
+  private int m_bottom;
+  private int m_left;
+  private int m_right;
+
+  public VideoFrameLayout(Context context)
+  {
+    this(context, null);
+  }
+
+  public VideoFrameLayout(Context context, AttributeSet attrs)
+  {
+    super(context, attrs);
+  }
+
+  public void setSurfaceRect(final int left, final int top, final int right, final int bottom)
+  {
+    m_top = top;
+    m_bottom = bottom;
+    m_left = left;
+    m_right = right;
+
+    requestLayout();
+  }
+
+  @Override
+  protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+    super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+
+    int width = getMeasuredWidth();
+    int height = getMeasuredHeight();
+
+    if (m_right != 0 && m_bottom != 0)
+    {
+      width = m_right - m_left;
+      height = m_bottom - m_top;
+    }
+    super.onMeasure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
+            MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY));
+  }
+}
