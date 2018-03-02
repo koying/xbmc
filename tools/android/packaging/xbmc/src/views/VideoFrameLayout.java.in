@@ -34,8 +34,6 @@ public class VideoFrameLayout extends FrameLayout
     m_bottom = bottom;
     m_left = left;
     m_right = right;
-
-    requestLayout();
   }
 
   @Override
