@@ -55,6 +55,9 @@ public:
   void Register(IDispResource *resource) override;
   void Unregister(IDispResource *resource) override;
 
+  // Action hook
+  bool ActionHook(const CAction &action) override;
+
   void MessagePush(XBMC_Event *newEvent);
 
 protected:
