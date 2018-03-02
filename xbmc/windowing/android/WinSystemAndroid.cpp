@@ -23,6 +23,9 @@
 #include <string.h>
 #include <float.h>
 
+#include "input/Action.h"
+#include "input/ActionIDs.h"
+
 #include "WinEventsAndroid.h"
 #include "ServiceBroker.h"
 #include "guilib/GraphicContext.h"
@@ -267,6 +270,22 @@ void CWinSystemAndroid::Unregister(IDispResource *resource)
   std::vector<IDispResource*>::iterator i = find(m_resources.begin(), m_resources.end(), resource);
   if (i != m_resources.end())
     m_resources.erase(i);
+}
+
+bool CWinSystemAndroid::ActionHook(const CAction& action)
+{
+  switch (action.GetID())
+  {
+  case ACTION_SHOW_GUI:
+    {
+      if (CJNIBase::GetSDKVersion() >= 24)
+      {
+        CXBMCApp::get()->RequestPictureInPictureMode();
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 void CWinSystemAndroid::MessagePush(XBMC_Event *newEvent)
