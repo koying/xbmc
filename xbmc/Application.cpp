@@ -1895,6 +1895,9 @@ void CApplication::SetStandAlone(bool value)
 
 bool CApplication::OnAction(const CAction &action)
 {
+  if (CServiceBroker::GetWinSystem().ActionHook(action))
+    return true;
+
   if (action.GetID() == ACTION_PICTUREINPICTURE)
   {
 #if defined(TARGET_ANDROID)

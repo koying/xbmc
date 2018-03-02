@@ -43,6 +43,7 @@ struct REFRESHRATE
 };
 
 class IRenderLoop;
+class CAction;
 
 class CWinSystemBase
 {
@@ -142,6 +143,9 @@ public:
   void RegisterRenderLoop(IRenderLoop *client);
   void UnregisterRenderLoop(IRenderLoop *client);
   void DriveRenderLoop();
+
+  // Action hook
+  virtual bool ActionHook(const CAction &action) { return false; }
 
 protected:
   void UpdateDesktopResolution(RESOLUTION_INFO& newRes, int screen, int width, int height, float refreshRate, uint32_t dwFlags = 0);
