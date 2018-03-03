@@ -18,15 +18,18 @@ public class XBMCVideoView extends SurfaceView implements
         SurfaceHolder.Callback
 {
   native void _surfaceChanged(SurfaceHolder holder, int format, int width, int height);
-
   native void _surfaceCreated(SurfaceHolder holder);
-
   native void _surfaceDestroyed(SurfaceHolder holder);
 
   private static final String TAG = "XBMCVideoPlayView";
 
   public boolean mIsCreated = false;
   private RelativeLayout mVideoLayout = null;
+  private int m_top = 0;
+  private int m_bottom = 0;
+  private int m_left = 0;
+  private int m_right = 0;
+
 
   public static XBMCVideoView createVideoView()
   {
@@ -70,6 +73,7 @@ public class XBMCVideoView extends SurfaceView implements
       public void run()
       {
         RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT);
+        //layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT, RelativeLayout.TRUE);
         mVideoLayout.addView(XBMCVideoView.this, layoutParams);
       }
     });
@@ -102,6 +106,13 @@ public class XBMCVideoView extends SurfaceView implements
 
   public void setSurfaceRect(final int left, final int top, final int right, final int bottom)
   {
+    m_top = top;
+    m_bottom = bottom;
+    m_left = left;
+    m_right = right;
+
+    Log.d(TAG, "setSurfaceRect: " + String.format("l: %d; t: %d; r: %d; b: %d", m_left, m_top, m_right, m_bottom));
+
     Main.MainActivity.runOnUiThread(new Runnable()
     {
       @Override
@@ -126,6 +137,29 @@ public class XBMCVideoView extends SurfaceView implements
     });
   }
 
+  @Override
+  protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+    super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+
+    int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+    int widthSize = MeasureSpec.getSize(widthMeasureSpec);
+    int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+    int heightSize = MeasureSpec.getSize(heightMeasureSpec);
+
+    int width = widthSize;
+    int height = heightSize;
+
+    if (m_right != 0 && m_bottom != 0)
+    {
+      height = m_bottom - m_top;
+      width = m_right - m_left;
+    }
+
+    Log.d(TAG, "onMeasure: " + String.format("w: %d (%d) -> %d  h: %d (%d) -> %d", widthSize, widthMode, width, heightSize, heightMode, height));
+
+    super.onMeasure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
+            MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY));
+  }
 
   @Override
   public void surfaceCreated(SurfaceHolder holder)
