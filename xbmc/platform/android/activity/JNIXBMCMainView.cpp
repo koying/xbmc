@@ -155,15 +155,3 @@ bool CJNIXBMCMainView::isCreated() const
 
 }
 
-void CJNIXBMCMainView::show()
-{
-  call_method<void>(m_object,
-                    "show", "()V");
-}
-
-void CJNIXBMCMainView::hide()
-{
-  call_method<void>(m_object,
-                    "hide", "()V");
-}
-

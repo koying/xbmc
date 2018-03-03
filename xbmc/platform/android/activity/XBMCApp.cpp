@@ -439,9 +439,6 @@ void CXBMCApp::RequestPictureInPictureMode()
   if (m_hasReqVisible)
     RequestVisibleBehind(false);
 
-  // Hide GUI view
-  m_mainView->hide();
-
   enterPictureInPictureMode();
   CLog::Log(LOGDEBUG, "Entering PIP mode");
 }
@@ -1020,8 +1017,6 @@ void CXBMCApp::onPictureInPictureModeChanged(bool isInPictureInPictureMode)
 {
   android_printf("%s: %s", __PRETTY_FUNCTION__, isInPictureInPictureMode ? "true" : "false");
   m_hasPIP = isInPictureInPictureMode;
-  if (!m_hasPIP)
-    m_mainView->show();
 }
 
 int CXBMCApp::WaitForActivityResult(const CJNIIntent &intent, int requestCode, CJNIIntent &result)
