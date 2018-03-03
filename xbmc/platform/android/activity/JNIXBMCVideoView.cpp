@@ -118,12 +118,14 @@ void CJNIXBMCVideoView::_surfaceDestroyed(JNIEnv* env, jobject thiz, jobject hol
 
 void CJNIXBMCVideoView::surfaceChanged(CJNISurfaceHolder holder, int format, int width, int height)
 {
+  m_surfaceRect = CRect(0, 0, 0, 0);
   if (m_callback)
     m_callback->surfaceChanged(holder, format, width, height);
 }
 
 void CJNIXBMCVideoView::surfaceCreated(CJNISurfaceHolder holder)
 {
+  m_surfaceRect = CRect(0, 0, 0, 0);
   if (m_callback)
     m_callback->surfaceCreated(holder);
   m_surfaceCreated.Set();
@@ -131,6 +133,7 @@ void CJNIXBMCVideoView::surfaceCreated(CJNISurfaceHolder holder)
 
 void CJNIXBMCVideoView::surfaceDestroyed(CJNISurfaceHolder holder)
 {
+  m_surfaceRect = CRect(0, 0, 0, 0);
   m_surfaceCreated.Reset();
   if (m_callback)
     m_callback->surfaceDestroyed(holder);
