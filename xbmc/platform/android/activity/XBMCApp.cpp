@@ -1258,7 +1258,6 @@ void CXBMCApp::onLayoutChange(int left, int top, int width, int height)
 
   CLog::Log(LOGDEBUG, "%s: %f + %f - %f x %f", __PRETTY_FUNCTION__, m_surface_rect.x1, m_surface_rect.y1, m_surface_rect.Width(), m_surface_rect.Height());
 
-  if (g_application.GetRenderGUI())
-    CalculateGUIRatios();
+  CalculateGUIRatios();
 }
 
