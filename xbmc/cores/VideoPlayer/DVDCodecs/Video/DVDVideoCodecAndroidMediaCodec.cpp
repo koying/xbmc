@@ -274,21 +274,15 @@ void CMediaCodecVideoBuffer::UpdateTexImage()
 
 void CMediaCodecVideoBuffer::RenderUpdate(const CRect &DestRect, int64_t displayTime)
 {
-  CRect surfRect = m_videoview->getSurfaceRect();
-  if (DestRect != surfRect)
+  CRect adjRect = CXBMCApp::MapRenderToDroid(DestRect);
+  if (adjRect != m_videoview->getSurfaceRect())
   {
-    CRect adjRect = CXBMCApp::MapRenderToDroid(DestRect);
-    if (adjRect != surfRect)
-    {
-      m_videoview->setSurfaceRect(adjRect);
-      CLog::Log(LOGDEBUG, LOGVIDEO, "CMediaCodecVideoBuffer::RenderUpdate: Dest - %f+%f-%fx%f", DestRect.x1, DestRect.y1, DestRect.Width(), DestRect.Height());
-      CLog::Log(LOGDEBUG, LOGVIDEO, "CMediaCodecVideoBuffer::RenderUpdate: Adj  - %f+%f-%fx%f", adjRect.x1, adjRect.y1, adjRect.Width(), adjRect.Height());
+    m_videoview->setSurfaceRect(adjRect);
+    CLog::Log(LOGDEBUG, "CMediaCodecVideoBuffer::RenderUpdate: Dest - %f+%f-%fx%f", DestRect.x1, DestRect.y1, DestRect.Width(), DestRect.Height());
+    CLog::Log(LOGDEBUG, "CMediaCodecVideoBuffer::RenderUpdate: Adj  - %f+%f-%fx%f", adjRect.x1, adjRect.y1, adjRect.Width(), adjRect.Height());
 
-      // setVideoViewSurfaceRect is async, so skip rendering this frame
-      ReleaseOutputBuffer(false, 0);
-    }
-    else
-      ReleaseOutputBuffer(true, displayTime);
+    // setVideoViewSurfaceRect is async, so skip rendering this frame
+    ReleaseOutputBuffer(false, 0);
   }
   else
     ReleaseOutputBuffer(true, displayTime);
