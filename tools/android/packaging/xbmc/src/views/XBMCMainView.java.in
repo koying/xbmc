@@ -8,6 +8,8 @@ import android.view.SurfaceView;
 import android.view.SurfaceHolder;
 import android.view.View;
 
+import @APP_PACKAGE@.Main;
+
 /**
  * Created by cbro on 5/13/17.
  */
@@ -49,6 +51,30 @@ public class XBMCMainView extends SurfaceView implements SurfaceHolder.Callback,
   public XBMCMainView(Context context, AttributeSet attrs)
   {
     this(context, attrs, 0);
+  }
+
+  void show()
+  {
+    Main.MainActivity.runOnUiThread(new Runnable()
+    {
+      @Override
+      public void run()
+      {
+        setVisibility(VISIBLE);
+      }
+    });
+  }
+
+  void hide()
+  {
+    Main.MainActivity.runOnUiThread(new Runnable()
+    {
+      @Override
+      public void run()
+      {
+        setVisibility(INVISIBLE);
+      }
+    });
   }
 
   @Override

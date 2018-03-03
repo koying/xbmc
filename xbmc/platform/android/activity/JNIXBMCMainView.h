@@ -52,6 +52,9 @@ public:
   CJNISurface getSurface();
   bool isCreated() const;
 
+  void show();
+  void hide();
+
 protected:
   static CJNIXBMCMainView* m_instance;
   CXBMCApp* m_xbmcapp;
