@@ -105,6 +105,7 @@ protected:
 class CXBMCApp
     : public IActivityHandler
     , public CJNIMainActivity
+    , public CJNIAudioManagerAudioFocusChangeListener
     , public CJNIBroadcastReceiver
     , public ANNOUNCEMENT::IAnnouncer
     , public CJNISurfaceHolderCallback
@@ -123,7 +124,7 @@ public:
   virtual void onNewIntent(CJNIIntent intent) override;
   virtual void onActivityResult(int requestCode, int resultCode, CJNIIntent resultData) override;
   virtual void onVolumeChanged(int volume) override;
-  virtual void onAudioFocusChange(int focusChange);
+  virtual void onAudioFocusChange(int focusChange) override;
   virtual void doFrame(int64_t frameTimeNanos) override;
   virtual void onVisibleBehindCanceled() override;
   virtual void onCaptureAvailable(jni::CJNIImage image) override;

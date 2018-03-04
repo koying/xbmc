@@ -153,7 +153,6 @@ CXBMCApp::CXBMCApp(ANativeActivity* nativeActivity)
   : CJNIBase()
   , CJNIMainActivity(nativeActivity->clazz)
   , CJNIXBMCInputDeviceListener()
-  , CJNIBroadcastReceiver()
   , m_videosurfaceInUse(false)
   , m_inputDeviceCallbacks(nullptr)
   , m_inputDeviceEventHandler(nullptr)
@@ -167,7 +166,7 @@ CXBMCApp::CXBMCApp(ANativeActivity* nativeActivity)
     exit(1);
     return;
   }
-  m_audioFocusListener.reset(new CJNIXBMCAudioManagerOnAudioFocusChangeListener());
+  m_audioFocusListener.reset(new CJNIXBMCAudioManagerOnAudioFocusChangeListener(this));
   m_broadcastReceiver.reset(new CJNIXBMCBroadcastReceiver(this));
   m_mainView.reset(new CJNIXBMCMainView(this));
   m_firstrun = true;

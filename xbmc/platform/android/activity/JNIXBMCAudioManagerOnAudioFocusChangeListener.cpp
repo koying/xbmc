@@ -23,14 +23,15 @@
 
 #include <androidjni/Context.h>
 #include "CompileInfo.h"
-#include "XBMCApp.h"
+#include "platform/android/activity/XBMCApp.h"
 
 using namespace jni;
 
 static std::string s_className = std::string(CCompileInfo::GetClass()) + "/interfaces/XBMCAudioManagerOnAudioFocusChangeListener";
 
-CJNIXBMCAudioManagerOnAudioFocusChangeListener::CJNIXBMCAudioManagerOnAudioFocusChangeListener()
+CJNIXBMCAudioManagerOnAudioFocusChangeListener::CJNIXBMCAudioManagerOnAudioFocusChangeListener(CJNIAudioManagerAudioFocusChangeListener* receiver)
   : CJNIBase(s_className)
+  , m_receiver(receiver)
 {
   m_object = new_object(CXBMCApp::get()->getClassLoader().loadClass(GetDotClassName(GetClassName())));
   m_object.setGlobal();
@@ -74,6 +75,6 @@ void CJNIXBMCAudioManagerOnAudioFocusChangeListener::_onAudioFocusChange(JNIEnv 
 
 void CJNIXBMCAudioManagerOnAudioFocusChangeListener::onAudioFocusChange(int focusChange)
 {
-  if(CXBMCApp::get())
-    CXBMCApp::get()->onAudioFocusChange(focusChange);
+  if (m_receiver)
+    m_receiver->onAudioFocusChange(focusChange);
 }

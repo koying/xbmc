@@ -131,14 +131,14 @@ static bool IsSupportedColorFormat(int color_format)
 
 /*****************************************************************************/
 /*****************************************************************************/
-class CDVDMediaCodecOnFrameAvailable : public CEvent, public CJNIXBMCSurfaceTextureOnFrameAvailableListener
+class CDVDMediaCodecOnFrameAvailable : public CEvent, public CJNISurfaceTextureOnFrameAvailableListener
 {
 public:
   CDVDMediaCodecOnFrameAvailable(std::shared_ptr<CJNISurfaceTexture> &surfaceTexture)
-    : CJNIXBMCSurfaceTextureOnFrameAvailableListener()
-    , m_surfaceTexture(surfaceTexture)
+    : m_surfaceTexture(surfaceTexture)
   {
-    m_surfaceTexture->setOnFrameAvailableListener(*this);
+    m_onFrameListener.reset(new CJNIXBMCSurfaceTextureOnFrameAvailableListener(this));
+    m_surfaceTexture->setOnFrameAvailableListener(*m_onFrameListener);
   }
 
   virtual ~CDVDMediaCodecOnFrameAvailable()
@@ -149,13 +149,14 @@ public:
   }
 
 protected:
-  void onFrameAvailable(CJNISurfaceTexture)
+  void onFrameAvailable(CJNISurfaceTexture) override
   {
     Set();
   }
 
 private:
   std::shared_ptr<CJNISurfaceTexture> m_surfaceTexture;
+  std::unique_ptr<CJNIXBMCSurfaceTextureOnFrameAvailableListener> m_onFrameListener;
 };
 
 /*****************************************************************************/

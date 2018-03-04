@@ -28,10 +28,11 @@ using namespace jni;
 
 static std::string s_className = std::string(CCompileInfo::GetClass()) + "/interfaces/XBMCSurfaceTextureOnFrameAvailableListener";
 
-CJNIXBMCSurfaceTextureOnFrameAvailableListener::CJNIXBMCSurfaceTextureOnFrameAvailableListener()
+CJNIXBMCSurfaceTextureOnFrameAvailableListener::CJNIXBMCSurfaceTextureOnFrameAvailableListener(CJNISurfaceTextureOnFrameAvailableListener* receiver)
   : CJNIBase(s_className)
+  , m_receiver(receiver)
 {
-  m_object = new_object(CXBMCApp::get()->getClassLoader().loadClass(GetDotClassName(GetClassName())));
+  m_object = new_object(CXBMCApp::get()->getClassLoader().loadClass(GetDotClassName(s_className)));
   m_object.setGlobal();
 
   add_instance(m_object, this);
@@ -69,4 +70,10 @@ void CJNIXBMCSurfaceTextureOnFrameAvailableListener::_onFrameAvailable(JNIEnv* e
   CJNIXBMCSurfaceTextureOnFrameAvailableListener *inst = find_instance(thiz);
   if (inst)
     inst->onFrameAvailable(CJNISurfaceTexture(jhobject::fromJNI(surface)));
+}
+
+void CJNIXBMCSurfaceTextureOnFrameAvailableListener::onFrameAvailable(CJNISurfaceTexture surface)
+{
+  if (m_receiver)
+    m_receiver->onFrameAvailable(surface);
 }
