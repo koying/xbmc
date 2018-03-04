@@ -190,7 +190,6 @@ public:
   int GetMaxSystemVolume();
   float GetSystemVolume();
   void SetSystemVolume(float percent);
-  void InitDirectories();
 
   void SetRefreshRate(float rate);
   void SetDisplayMode(int mode);

@@ -72,6 +72,7 @@ bool CFilesystemInstaller::InstallToFilesystem(const std::string& archive, const
       CLog::Log(LOGWARNING, "Failed to delete old addon files in '%s'", oldAddonData.c_str());
     }
   }
+
   return true;
 }
 
