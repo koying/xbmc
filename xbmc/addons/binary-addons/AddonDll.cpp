@@ -88,8 +88,12 @@ std::string CAddonDll::GetDllPath(const std::string &libPath)
 
   /* Check if lib being loaded exists, else check in XBMC binary location */
 #if defined(TARGET_ANDROID)
-  // Android libs MUST live in this path, else multi-arch will break.
-  // The usual soname requirements apply. no subdirs, and filename is ^lib.*\.so$
+  if (XFILE::CFile::Exists(strFileName))
+  {
+    std::string dstfile = URIUtils::AddFileToFolder(CSpecialProtocol::TranslatePath("special://xbmcbinaddons/"), strLibName);
+    XFILE::CFile::Copy(strFileName, dstfile);
+    strFileName = dstfile;
+  }
   if (!XFILE::CFile::Exists(strFileName))
   {
     std::string tempbin = getenv("XBMC_ANDROID_LIBS");
@@ -280,6 +284,15 @@ void CAddonDll::Destroy()
     m_pDll->Destroy();
     m_pDll->Unload();
   }
+
+#ifdef TARGET_ANDROID
+  // Remove from cache
+  std::string strFileName = LibPath();
+  std::string strLibName = URIUtils::GetFileName(strFileName);
+  std::string cacheFile = URIUtils::AddFileToFolder(CSpecialProtocol::TranslatePath("special://xbmcbinaddons/"), strLibName);
+  if (strFileName == cacheFile)
+    XFILE::CFile::Delete(strFileName);
+#endif
 
   DeInitInterface();
 
