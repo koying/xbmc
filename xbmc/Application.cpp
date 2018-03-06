@@ -871,11 +871,6 @@ bool CApplication::InitDirectoriesLinux()
   }
   CSpecialProtocol::SetXBMCBinAddonPath(appBinPath + "/addons");
 
-#if defined(TARGET_ANDROID)
-  CSpecialProtocol::SetXBMCBinAddonPath(appBinPath + "/lib");
-  CDirectory::Create("special://xbmcaltbinaddons/");
-#endif
-
   return true;
 #else
   return false;

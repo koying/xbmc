@@ -90,8 +90,26 @@ std::string CAddonDll::GetDllPath(const std::string &libPath)
 #if defined(TARGET_ANDROID)
   if (XFILE::CFile::Exists(strFileName))
   {
-    std::string dstfile = URIUtils::AddFileToFolder(CSpecialProtocol::TranslatePath("special://xbmcbinaddons/"), strLibName);
-    XFILE::CFile::Copy(strFileName, dstfile);
+    bool doCopy = true;
+    std::string dstfile = URIUtils::AddFileToFolder(CSpecialProtocol::TranslatePath("special://xbmcaltbinaddons/"), strLibName);
+
+    struct __stat64 dstFileStat;
+    if (XFILE::CFile::Stat(dstfile, &dstFileStat) == 0)
+    {
+      struct __stat64 srcFileStat;
+      if (XFILE::CFile::Stat(strFileName, &srcFileStat) == 0)
+      {
+        if (dstFileStat.st_size == srcFileStat.st_size && dstFileStat.st_mtime > srcFileStat.st_mtime)
+          doCopy = false;
+      }
+    }
+
+    if (doCopy)
+    {
+      CLog::Log(LOGDEBUG, "ADDON: caching %s to %s", strFileName.c_str(), dstfile.c_str());
+      XFILE::CFile::Copy(strFileName, dstfile);
+    }
+
     strFileName = dstfile;
   }
   if (!XFILE::CFile::Exists(strFileName))
@@ -284,15 +302,6 @@ void CAddonDll::Destroy()
     m_pDll->Destroy();
     m_pDll->Unload();
   }
-
-#ifdef TARGET_ANDROID
-  // Remove from cache
-  std::string strFileName = LibPath();
-  std::string strLibName = URIUtils::GetFileName(strFileName);
-  std::string cacheFile = URIUtils::AddFileToFolder(CSpecialProtocol::TranslatePath("special://xbmcbinaddons/"), strLibName);
-  if (strFileName == cacheFile)
-    XFILE::CFile::Delete(strFileName);
-#endif
 
   DeInitInterface();
 

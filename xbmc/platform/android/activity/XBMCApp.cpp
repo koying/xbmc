@@ -1291,10 +1291,10 @@ void CXBMCApp::SetupEnv()
   StringUtils::ToLower(appName);
   std::string className = CCompileInfo::GetPackage();
 
+  std::string cacheDir = getCacheDir().getAbsolutePath();
   std::string xbmcHome = CJNISystem::getProperty("xbmc.home", "");
   if (xbmcHome.empty())
   {
-    std::string cacheDir = getCacheDir().getAbsolutePath();
     setenv("KODI_BIN_HOME", (cacheDir + "/apk/assets").c_str(), 0);
     setenv("KODI_HOME", (cacheDir + "/apk/assets").c_str(), 0);
   }
@@ -1303,6 +1303,7 @@ void CXBMCApp::SetupEnv()
     setenv("KODI_BIN_HOME", (xbmcHome + "/assets").c_str(), 0);
     setenv("KODI_HOME", (xbmcHome + "/assets").c_str(), 0);
   }
+  setenv("KODI_BINADDON_PATH", (cacheDir + "/lib").c_str(), 0);
 
   std::string externalDir = CJNISystem::getProperty("xbmc.data", "");
   if (externalDir.empty())
