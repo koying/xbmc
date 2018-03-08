@@ -499,8 +499,7 @@ bool CAddonDatabase::FindByAddonId(const std::string& addonId, ADDON::VECADDONS&
         "JOIN addonlinkrepo ON addonlinkrepo.idAddon=addons.id "
         "JOIN repo ON repo.id=addonlinkrepo.idRepo "
         "WHERE "
-        "repo.checksum IS NOT NULL AND repo.checksum != '' "
-        "AND EXISTS (SELECT * FROM installed WHERE installed.addonID=repoID AND installed.enabled=1) "
+        "EXISTS (SELECT * FROM installed WHERE installed.addonID=repoID AND installed.enabled=1) "
         "AND addons.addonID='%s'", addonId.c_str());
 
     VECADDONS addons;
@@ -548,8 +547,7 @@ bool CAddonDatabase::GetAvailableVersions(const std::string& addonId,
         "JOIN addonlinkrepo ON addonlinkrepo.idAddon=addons.id "
         "JOIN repo ON repo.id=addonlinkrepo.idRepo "
         "WHERE "
-        "repo.checksum IS NOT NULL AND repo.checksum != '' "
-        "AND EXISTS (SELECT * FROM installed WHERE installed.addonID=repoID AND installed.enabled=1) "
+        "EXISTS (SELECT * FROM installed WHERE installed.addonID=repoID AND installed.enabled=1) "
         "AND addons.addonID='%s'", addonId.c_str());
 
     m_pDS->query(sql.c_str());
@@ -682,8 +680,7 @@ bool CAddonDatabase::GetRepositoryContent(const std::string& id, VECADDONS& addo
     {
       std::string sql = PrepareSQL(
           " SELECT repo.id FROM repo"
-          " WHERE repo.checksum IS NOT NULL AND repo.checksum != ''"
-          " AND EXISTS (SELECT * FROM installed WHERE installed.addonID=repo.addonID AND"
+          " WHERE EXISTS (SELECT * FROM installed WHERE installed.addonID=repo.addonID AND"
           " installed.enabled=1)");
 
       if (!id.empty())

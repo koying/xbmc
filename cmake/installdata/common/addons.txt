@@ -18,6 +18,7 @@ addons/xbmc.metadata/*
 addons/xbmc.pvr/*
 addons/xbmc.python/*
 addons/xbmc.webinterface/*
+addons/repository.xbmc.bin/*
 addons/repository.xbmc.org/*
 addons/webinterface.default/*
 addons/screensaver.xbmc.builtin.dim/*
