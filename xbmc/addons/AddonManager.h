@@ -300,9 +300,17 @@ namespace ADDON
 
     /*! \brief Check whether this addon is supported on the current platform
      \param info the plugin descriptor
+     \param platformMatch the matched platform
      \return true if the addon is supported, false otherwise.
      */
+    static bool PlatformSupportsAddon(const cp_plugin_info_t *info, std::string& platformMatch);
     static bool PlatformSupportsAddon(const cp_plugin_info_t *info);
+
+    /*! \brief Check whether this addon is platformdependant
+     \param info the plugin descriptor
+     \return true if the addon is platform dependant, false otherwise.
+    */
+    static bool PlatformDependentAddon(const cp_plugin_info_t *info);
 
     bool GetAddonsInternal(const TYPE &type, VECADDONS &addons, bool enabledOnly);
     bool EnableSingle(const std::string& id);

@@ -988,6 +988,12 @@ std::string CAddonMgr::GetTranslatedString(const cp_cfg_element_t *root, const c
 
 bool CAddonMgr::PlatformSupportsAddon(const cp_plugin_info_t *plugin)
 {
+  std::string platformMatch;
+  return PlatformSupportsAddon(plugin, platformMatch);
+}
+
+bool CAddonMgr::PlatformSupportsAddon(const cp_plugin_info_t *plugin, std::string& platformMatch)
+{
   auto *metadata = CServiceBroker::GetAddonMgr().GetExtension(plugin, "xbmc.addon.metadata");
   if (!metadata)
     metadata = CServiceBroker::GetAddonMgr().GetExtension(plugin, "kodi.addon.metadata");
@@ -1029,10 +1035,29 @@ bool CAddonMgr::PlatformSupportsAddon(const cp_plugin_info_t *plugin)
 #endif
   };
 
-  return std::find_first_of(platforms.begin(), platforms.end(),
-      supportedPlatforms.begin(), supportedPlatforms.end()) != platforms.end();
+  auto firstMatch = std::find_first_of(platforms.begin(), platforms.end(), supportedPlatforms.begin(), supportedPlatforms.end());
+  if (firstMatch != platforms.end())
+    platformMatch = *firstMatch;
+  return firstMatch != platforms.end();
 }
 
+bool CAddonMgr::PlatformDependentAddon(const cp_plugin_info_t *plugin)
+{
+  auto *metadata = CServiceBroker::GetAddonMgr().GetExtension(plugin, "xbmc.addon.metadata");
+  if (!metadata)
+    metadata = CServiceBroker::GetAddonMgr().GetExtension(plugin, "kodi.addon.metadata");
+
+  // if platform dependant is not specified, assume not platformdependent
+  if (!metadata)
+    return false;
+
+  cp_cfg_element_t* platform = CServiceBroker::GetAddonMgr().GetExtElement(metadata->configuration, "platform");
+  if (!platform)
+    return false;
+  
+  return CServiceBroker::GetAddonMgr().GetExtValue(platform, "@platformdependent") == "true";
+}
+  
 cp_cfg_element_t *CAddonMgr::GetExtElement(cp_cfg_element_t *base, const char *path)
 {
   cp_cfg_element_t *element = NULL;
@@ -1196,8 +1221,14 @@ bool CAddonMgr::AddonsFromRepoXML(const CRepository::DirInfo& repo, const std::s
 
       if (Factory(info, ADDON_UNKNOWN, builder))
       {
-        builder.SetPath(URIUtils::AddFileToFolder(repo.datadir, StringUtils::Format("%s/%s-%s.zip",
-            info->identifier, info->identifier, builder.GetVersion().asString().c_str())));
+        std::string relativePath = StringUtils::Format("%s/%s-%s.zip", info->identifier, info->identifier, builder.GetVersion().asString().c_str());
+        if (PlatformDependentAddon(info))
+        {
+          std::string platformMatch;
+          PlatformSupportsAddon(info, platformMatch);
+          relativePath = StringUtils::Format("%s/%s-%s-%s.zip", info->identifier, info->identifier, builder.GetVersion().asString().c_str(), platformMatch.c_str());
+        }
+        builder.SetPath(URIUtils::AddFileToFolder(repo.datadir, relativePath));
         auto addon = builder.Build();
         if (addon)
           addons.push_back(std::move(addon));
