@@ -16,7 +16,7 @@ macro(add_cpack_workaround target version ext)
 
   add_custom_command(TARGET addon-package POST_BUILD
                      COMMAND ${CMAKE_COMMAND} -E make_directory ${PACKAGE_DIR}
-                     COMMAND ${CMAKE_COMMAND} -E copy ${CPACK_PACKAGE_DIRECTORY}/addon-${target}-${version}.${ext} ${PACKAGE_DIR}/${target}-${version}.${ext})
+                     COMMAND ${CMAKE_COMMAND} -E copy ${CPACK_PACKAGE_DIRECTORY}/addon-${target}-${version}-${PLATFORM_TAG}.${ext} ${PACKAGE_DIR}/${target}-${version}-${PLATFORM_TAG}.${ext})
 endmacro()
 
 # Grab the version from a given add-on's addon.xml
@@ -182,6 +182,24 @@ macro (build_addon target prefix libs)
   if(EXISTS ${PROJECT_SOURCE_DIR}/${target}/addon.xml.in)
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/${target}/addon.xml.in)
     set(PLATFORM ${CORE_SYSTEM_NAME})
+    set(PLATFORM_TAG ${CORE_SYSTEM_NAME})
+
+    if(CORE_SYSTEM_NAME STREQUAL windows)
+      include(CheckSymbolExists)
+      check_symbol_exists(_X86_ "Windows.h" _X86_)
+      check_symbol_exists(_AMD64_ "Windows.h" _AMD64_)
+
+      if(_X86_)
+        set(PLATFORM_TAG ${PLATFORM_TAG}-i686)
+      elseif(_AMD64_)
+        set(PLATFORM_TAG ${PLATFORM_TAG}-x86_64)
+      else()
+        message(FATAL_ERROR "Unsupported architecture")
+      endif()
+       
+      unset(_X86_)
+      unset(_AMD64_)
+    endif()
 
     file(READ ${PROJECT_SOURCE_DIR}/${target}/addon.xml.in addon_file)
 
@@ -228,10 +246,10 @@ macro (build_addon target prefix libs)
     endif()
     set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
     set(CPACK_COMPONENTS_IGNORE_GROUPS 1)
-    list(APPEND CPACK_COMPONENTS_ALL ${target}-${${prefix}_VERSION})
+    list(APPEND CPACK_COMPONENTS_ALL ${target}-${${prefix}_VERSION}-${PLATFORM_TAG})
     # Pack files together to create an archive
     install(DIRECTORY ${target} ${CMAKE_CURRENT_BINARY_DIR}/${target} DESTINATION ./
-                                COMPONENT ${target}-${${prefix}_VERSION}
+                                COMPONENT ${target}-${${prefix}_VERSION}-${PLATFORM_TAG}
                                 REGEX ".+\\.xml\\.in(clude)?$" EXCLUDE)
     if(WIN32)
       if(NOT CPACK_PACKAGE_DIRECTORY)
@@ -255,12 +273,12 @@ macro (build_addon target prefix libs)
       if(${prefix}_SOURCES)
         # install the generated DLL file
         install(PROGRAMS ${LIBRARY_LOCATION} DESTINATION ${target}
-                COMPONENT ${target}-${${prefix}_VERSION})
+                COMPONENT ${target}-${${prefix}_VERSION}-${PLATFORM_TAG})
 
         if(CMAKE_BUILD_TYPE MATCHES Debug)
           # for debug builds also install the PDB file
           install(FILES $<TARGET_PDB_FILE:${target}> DESTINATION ${target}
-                  COMPONENT ${target}-${${prefix}_VERSION})
+                  COMPONENT ${target}-${${prefix}_VERSION}-${PLATFORM_TAG})
         endif()
       endif()
       if(${prefix}_CUSTOM_BINARY)
@@ -278,11 +296,11 @@ macro (build_addon target prefix libs)
       endif()
       if(${prefix}_SOURCES)
         install(TARGETS ${target} DESTINATION ${target}
-                COMPONENT ${target}-${${prefix}_VERSION})
+                COMPONENT ${target}-${${prefix}_VERSION}-${PLATFORM_TAG})
       endif()
       if(${prefix}_CUSTOM_BINARY)
         install(FILES ${LIBRARY_LOCATION} DESTINATION ${target} RENAME ${LIBRARY_FILENAME}
-                COMPONENT ${target}-${${prefix}_VERSION})
+                COMPONENT ${target}-${${prefix}_VERSION}-${PLATFORM_TAG})
       endif()
       if(${prefix}_CUSTOM_DATA)
         install(DIRECTORY ${${prefix}_CUSTOM_DATA} DESTINATION ${target}/resources)
