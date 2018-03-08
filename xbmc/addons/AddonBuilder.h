@@ -57,9 +57,11 @@ public:
   void SetLastUsed(CDateTime lastUsed) { m_addonInfo.m_lastUsed = lastUsed; }
   void SetOrigin(std::string origin) { m_addonInfo.m_origin = std::move(origin); }
   void SetPackageSize(uint64_t size) { m_addonInfo.m_packageSize = size; }
+  void SetPlatformDependent(bool platformDependent) { m_addonInfo.m_platformDependent = platformDependent; }
 
   const std::string& GetId() const { return m_addonInfo.m_id; }
   const AddonVersion& GetVersion() const { return m_addonInfo.m_version; }
+  bool GetPlatformDependent() const { return m_addonInfo.m_platformDependent; }
 
   const CAddonInfo& GetAddonInfo() const { return m_addonInfo; }
 

@@ -163,6 +163,11 @@ void CAddonMgr::FillCpluffMetadata(const cp_plugin_info_t* plugin, CAddonBuilder
     builder.SetLicense(CServiceBroker::GetAddonMgr().GetExtValue(metadata->configuration, "license"));
     builder.SetPackageSize(StringUtils::ToUint64(CServiceBroker::GetAddonMgr().GetExtValue(metadata->configuration, "size"), 0));
 
+    cp_cfg_element_t* platform = CServiceBroker::GetAddonMgr().GetExtElement(metadata->configuration, "platform");
+    if (platform && CServiceBroker::GetAddonMgr().GetExtValue(platform, "@platformdependent") == "true")
+      builder.SetPlatformDependent(true);
+
+
     std::string language = CServiceBroker::GetAddonMgr().GetExtValue(metadata->configuration, "language");
     if (!language.empty())
     {
@@ -1068,23 +1073,6 @@ bool CAddonMgr::PlatformSupportsAddon(const cp_plugin_info_t *plugin, std::strin
   return firstMatch != platforms.end();
 }
 
-bool CAddonMgr::PlatformDependentAddon(const cp_plugin_info_t *plugin)
-{
-  auto *metadata = CServiceBroker::GetAddonMgr().GetExtension(plugin, "xbmc.addon.metadata");
-  if (!metadata)
-    metadata = CServiceBroker::GetAddonMgr().GetExtension(plugin, "kodi.addon.metadata");
-
-  // if platform dependant is not specified, assume not platformdependent
-  if (!metadata)
-    return false;
-
-  cp_cfg_element_t* platform = CServiceBroker::GetAddonMgr().GetExtElement(metadata->configuration, "platform");
-  if (!platform)
-    return false;
-  
-  return CServiceBroker::GetAddonMgr().GetExtValue(platform, "@platformdependent") == "true";
-}
-  
 cp_cfg_element_t *CAddonMgr::GetExtElement(cp_cfg_element_t *base, const char *path)
 {
   cp_cfg_element_t *element = NULL;
@@ -1249,7 +1237,7 @@ bool CAddonMgr::AddonsFromRepoXML(const CRepository::DirInfo& repo, const std::s
       if (Factory(info, ADDON_UNKNOWN, builder))
       {
         std::string relativePath = StringUtils::Format("%s/%s-%s.zip", info->identifier, info->identifier, builder.GetVersion().asString().c_str());
-        if (PlatformDependentAddon(info))
+        if (builder.GetPlatformDependent())
         {
           std::string platformMatch;
           PlatformSupportsAddon(info, platformMatch);

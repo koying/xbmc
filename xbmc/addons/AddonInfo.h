@@ -148,6 +148,7 @@ namespace ADDON
     const std::string& Language() const { return m_language; }
     const InfoMap& ExtraInfo() const { return m_extrainfo; }
     bool MeetsVersion(const AddonVersion &version) const;
+    bool PlatformDependent() { return m_platformDependent; }
 
     /*!
      * @brief Utilities to translate add-on parts to his requested part.
@@ -189,6 +190,7 @@ namespace ADDON
     std::string m_language;
     std::string m_libname;
     InfoMap m_extrainfo;
+    bool m_platformDependent = false;
   };
 
 } /* namespace ADDON */
