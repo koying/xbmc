@@ -7,8 +7,8 @@
     <import addon="xbmc.addon" version="12.0.0"/>
   </requires>
 	<extension point="xbmc.addon.repository">
-		<info>https://github.com/Rechi/kodi-binary-test/raw/master/addons.xml?w=</info>
-		<datadir>https://github.com/Rechi/kodi-binary-test/raw/master/</datadir>
+		<info>http://download.semperpax.com/kodi-binary-addons/addons.xml</info>
+		<datadir>http://download.semperpax.com/kodi-binary-addons/</datadir>
 		<hashes>false</hashes>
 	</extension>
 	<extension point="xbmc.addon.metadata">
