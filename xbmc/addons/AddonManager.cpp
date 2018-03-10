@@ -1018,7 +1018,7 @@ bool CAddonMgr::PlatformSupportsAddon(const cp_plugin_info_t *plugin, std::strin
     "all",
 #if defined(TARGET_ANDROID)
     "android",
-#if defined(__ARM_ARCH_7A__)
+#if defined(__arm__)
     "android-armv7",
 #elif defined(__aarch64__)
     "android-aarch64",
@@ -1134,6 +1134,14 @@ std::string CAddonMgr::GetPlatformLibraryName(cp_cfg_element_t *base) const
   std::string libraryName;
 #if defined(TARGET_ANDROID)
   libraryName = GetExtValue(base, "@library_android");
+  if (libraryName.empty())
+#if defined(__arm__)
+    libraryName = GetExtValue(base, "@library_android-armv7");
+#elif defined(__aarch64__)
+    libraryName = GetExtValue(base, "@library_android-aarch64");
+#elif defined(__i686__)
+    libraryName = GetExtValue(base, "@library_android-i686");
+#endif
 #elif defined(TARGET_LINUX) || defined(TARGET_FREEBSD)
 #if defined(TARGET_FREEBSD)
   libraryName = GetExtValue(base, "@library_freebsd");
