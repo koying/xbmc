@@ -108,6 +108,8 @@ bool CAddonMgr::Factory(const cp_plugin_info_t* plugin, TYPE type, CAddonBuilder
 
 void CAddonMgr::FillCpluffMetadata(const cp_plugin_info_t* plugin, CAddonBuilder& builder)
 {
+  bool isBinary = false;
+
   builder.SetId(plugin->identifier);
 
   if (plugin->version)
@@ -132,6 +134,8 @@ void CAddonMgr::FillCpluffMetadata(const cp_plugin_info_t* plugin, CAddonBuilder
       if (plugin->imports[i].plugin_id)
       {
         std::string id(plugin->imports[i].plugin_id);
+        if (id == "kodi.binary.global.main")
+          isBinary = true;
         AddonVersion version(plugin->imports[i].version ? plugin->imports[i].version : "0.0.0");
         dependencies.emplace_back(id, version, plugin->imports[i].optional != 0);
       }
@@ -164,7 +168,7 @@ void CAddonMgr::FillCpluffMetadata(const cp_plugin_info_t* plugin, CAddonBuilder
     builder.SetPackageSize(StringUtils::ToUint64(CServiceBroker::GetAddonMgr().GetExtValue(metadata->configuration, "size"), 0));
 
     cp_cfg_element_t* platform = CServiceBroker::GetAddonMgr().GetExtElement(metadata->configuration, "platform");
-    if (platform && CServiceBroker::GetAddonMgr().GetExtValue(platform, "@platformdependent") == "true")
+    if (isBinary && platform && CServiceBroker::GetAddonMgr().GetExtValue(metadata->configuration, "platform") != "all")
       builder.SetPlatformDependent(true);
 
 
