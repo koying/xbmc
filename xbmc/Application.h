@@ -502,6 +502,7 @@ private:
   unsigned int m_ProcessedExternalDecay = 0;      /*!< counts to close door after a few frames of no python activity */
   CApplicationPlayer m_appPlayer;
   CApplicationStackHelper m_stackHelper;
+  CEvent m_playerPlayingEvent;
 };
 
 XBMC_GLOBAL_REF(CApplication,g_application);

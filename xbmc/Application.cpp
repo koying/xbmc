@@ -141,6 +141,7 @@
 #include "dialogs/GUIDialogButtonMenu.h"
 #include "dialogs/GUIDialogSimpleMenu.h"
 #include "dialogs/GUIDialogVolumeBar.h"
+#include "dialogs/GUIDialogBusy.h"
 #include "addons/settings/GUIDialogAddonSettings.h"
 
 // PVR related include Files
@@ -3210,6 +3211,7 @@ bool CApplication::PlayFile(CFileItem item, const std::string& player, bool bRes
   }
 
   m_appPlayer.OpenFile(item, options, m_ServiceManager->GetPlayerCoreFactory(), player, *this);
+
   m_appPlayer.SetVolume(m_volumeLevel);
   m_appPlayer.SetMute(m_muted);
 
@@ -3220,12 +3222,16 @@ bool CApplication::PlayFile(CFileItem item, const std::string& player, bool bRes
   if (item.HasPVRChannelInfoTag())
     CServiceBroker::GetPlaylistPlayer().SetCurrentPlaylist(PLAYLIST_NONE);
 
+  m_playerPlayingEvent.Reset();
+  CGUIDialogBusy::WaitOnEvent(m_playerPlayingEvent);
+
   return true;
 }
 
 void CApplication::OnPlayBackEnded()
 {
   CLog::LogF(LOGDEBUG ,"CApplication::OnPlayBackEnded");
+  m_playerPlayingEvent.Set();
 
   // informs python script currently running playback has ended
   // (does nothing if python is not loaded)
@@ -3246,6 +3252,7 @@ void CApplication::OnPlayBackEnded()
 void CApplication::OnPlayBackStarted(const CFileItem &file)
 {
   CLog::LogF(LOGDEBUG,"CApplication::OnPlayBackStarted");
+  m_playerPlayingEvent.Set();
 
 #ifdef HAS_PYTHON
   // informs python script currently running playback has started
@@ -3348,6 +3355,7 @@ void CApplication::OnQueueNextItem()
 void CApplication::OnPlayBackStopped()
 {
   CLog::LogF(LOGDEBUG, "CApplication::OnPlayBackStopped");
+  m_playerPlayingEvent.Set();
 
   // informs python script currently running playback has ended
   // (does nothing if python is not loaded)
@@ -3393,6 +3401,8 @@ void CApplication::OnPlayBackPaused()
 
 void CApplication::OnPlayBackResumed()
 {
+  m_playerPlayingEvent.Set();
+
 #ifdef HAS_PYTHON
   g_pythonParser.OnPlayBackResumed();
 #endif
@@ -3443,6 +3453,7 @@ void CApplication::OnPlayBackSeekChapter(int iChapter)
 
 void CApplication::OnAVChange()
 {
+  m_playerPlayingEvent.Set();
   CStereoscopicsManager::GetInstance().OnStreamChange();
 }
 
