@@ -3036,6 +3036,10 @@ bool CApplication::PlayFile(CFileItem item, const std::string& player, bool bRes
   if (item.IsPlayList())
     return false;
 
+  if (item.IsVideoDb())
+    item.SetPath(item.GetVideoInfoTag()->m_strFileNameAndPath);
+
+
   if (item.IsPlugin())
   { // we modify the item so that it becomes a real URL
     bool resume = item.m_lStartOffset == STARTOFFSET_RESUME;
