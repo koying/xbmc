@@ -27,6 +27,7 @@
 #include "input/ActionIDs.h"
 
 #include "WinEventsAndroid.h"
+#include "OSScreenSaverAndroid.h"
 #include "ServiceBroker.h"
 #include "guilib/GraphicContext.h"
 #include "guilib/Resolution.h"
@@ -291,4 +292,10 @@ bool CWinSystemAndroid::ActionHook(const CAction& action)
 void CWinSystemAndroid::MessagePush(XBMC_Event *newEvent)
 {
   dynamic_cast<CWinEventsAndroid&>(*m_winEvents).MessagePush(newEvent);
+}
+
+std::unique_ptr<WINDOWING::IOSScreenSaver> CWinSystemAndroid::GetOSScreenSaverImpl()
+{
+  std::unique_ptr<KODI::WINDOWING::IOSScreenSaver> ret(new COSScreenSaverAndroid());
+  return ret;
 }

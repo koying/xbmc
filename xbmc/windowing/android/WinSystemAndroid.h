@@ -61,6 +61,8 @@ public:
   void MessagePush(XBMC_Event *newEvent);
 
 protected:
+  std::unique_ptr<KODI::WINDOWING::IOSScreenSaver> GetOSScreenSaverImpl() override;
+
   CAndroidUtils *m_android;
 
   EGLDisplay m_nativeDisplay;
