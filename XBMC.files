@@ -1,3 +1,4 @@
+tools/android/packaging/Makefile.in
 tools/android/packaging/xbmc/src/Main.java.in
 tools/android/packaging/xbmc/src/Service.java.in
 tools/android/packaging/xbmc/src/Splash.java.in
