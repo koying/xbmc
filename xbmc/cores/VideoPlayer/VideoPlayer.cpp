@@ -721,8 +721,6 @@ bool CVideoPlayer::OpenFile(const CFileItem& file, const CPlayerOptions &options
 
   Create();
 
-  m_callback.OnPlayBackStarted(m_item);
-
   return true;
 }
 
