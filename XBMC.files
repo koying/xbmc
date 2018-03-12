@@ -123,6 +123,8 @@ xbmc/XBDateTime.cpp
 xbmc/XBDateTime.h
 xbmc/system.h
 xbmc/system_gl.h
+xbmc/windowing/android/OSScreenSaverAndroid.cpp
+xbmc/windowing/android/OSScreenSaverAndroid.h
 xbmc/windows/GUIWindowSystemInfo.h
 cmake/KodiConfig.cmake.in
 cmake/README.md
