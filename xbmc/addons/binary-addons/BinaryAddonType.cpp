@@ -63,6 +63,14 @@ const char* CBinaryAddonType::GetPlatformLibraryName(const TiXmlElement* element
   const char* libraryName;
 #if defined(TARGET_ANDROID)
   libraryName = element->Attribute("library_android");
+  if (libraryName == nullptr)
+#if defined(__arm__)
+    libraryName = element->Attribute("library_android-armv7");
+#elif defined(__aarch64__)
+    libraryName = element->Attribute("library_android-aarch64");
+#elif defined(__i686__)
+    libraryName = element->Attribute("library_android-i686");
+#endif
 #elif defined(TARGET_LINUX) || defined(TARGET_FREEBSD)
 #if defined(TARGET_FREEBSD)
   libraryName = element->Attribute("library_freebsd");
