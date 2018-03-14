@@ -80,6 +80,8 @@ CAddonDll::~CAddonDll()
 
 std::string CAddonDll::GetDllPath(const std::string &libPath)
 {
+  CLog::Log(LOG_DEBUG, "%s - %s", __PRETTY_FUNCTION__, libPath.c_str());
+
   std::string strFileName = libPath;
   std::string strLibName = URIUtils::GetFileName(strFileName);
 
@@ -90,6 +92,8 @@ std::string CAddonDll::GetDllPath(const std::string &libPath)
 #if defined(TARGET_ANDROID)
   if (XFILE::CFile::Exists(strFileName))
   {
+    CLog::Log(LOG_DEBUG, "Caching - %s", __PRETTY_FUNCTION__, strFileName.c_str());
+
     bool doCopy = true;
     std::string dstfile = URIUtils::AddFileToFolder(CSpecialProtocol::TranslatePath("special://xbmcaltbinaddons/"), strLibName);
 
@@ -200,17 +204,26 @@ ADDON_STATUS CAddonDll::Create(ADDON_TYPE type, void* funcTable, void* info)
   m_initialized = false;
 
   if (!LoadDll())
+  {
+    CLog::Log(LOGERROR, "%s - Cannot load DLL", __PRETTY_FUNCTION__);
     return ADDON_STATUS_PERMANENT_FAILURE;
+  }
 
   /* Check requested instance version on add-on */
   if (!CheckAPIVersion(type))
+  {
+    CLog::Log(LOGERROR, "%s - Wrong API", __PRETTY_FUNCTION__);
     return ADDON_STATUS_PERMANENT_FAILURE;
+  }
 
   /* Check versions about global parts on add-on (parts used on all types) */
   for (unsigned int id = ADDON_GLOBAL_MAIN; id <= ADDON_GLOBAL_MAX; ++id)
   {
     if (!CheckAPIVersion(id))
+    {
+      CLog::Log(LOGERROR, "%s - Wrong API: %d", __PRETTY_FUNCTION__, id);
       return ADDON_STATUS_PERMANENT_FAILURE;
+    }
   }
 
   /* Load add-on function table (written by add-on itself) */
@@ -253,6 +266,7 @@ ADDON_STATUS CAddonDll::Create(KODI_HANDLE firstKodiInstance)
 
   if (!LoadDll())
   {
+    CLog::Log(LOGERROR, "%s - Cannot load DLL", __PRETTY_FUNCTION__);
     return ADDON_STATUS_PERMANENT_FAILURE;
   }
 
@@ -260,13 +274,19 @@ ADDON_STATUS CAddonDll::Create(KODI_HANDLE firstKodiInstance)
   for (unsigned int id = ADDON_GLOBAL_MAIN; id <= ADDON_GLOBAL_MAX; ++id)
   {
     if (!CheckAPIVersion(id))
+    {
+      CLog::Log(LOGERROR, "%s - Wrong API: %d", __PRETTY_FUNCTION__, id);
       return ADDON_STATUS_PERMANENT_FAILURE;
+    }
   }
 
   /* Allocate the helper function class to allow crosstalk over
      helper add-on headers */
   if (!InitInterface(firstKodiInstance))
+  {
+    CLog::Log(LOGERROR, "%s - Cannot InitInterface", __PRETTY_FUNCTION__);
     return ADDON_STATUS_PERMANENT_FAILURE;
+  }
 
   /* Call Create to make connections, initializing data or whatever is
      needed to become the AddOn running */
@@ -327,7 +347,10 @@ ADDON_STATUS CAddonDll::CreateInstance(ADDON_TYPE instanceType, const std::strin
 
   /* Check version of requested instance type */
   if (!CheckAPIVersion(instanceType))
+  {
+    CLog::Log(LOGERROR, "%s - Wrong API", __PRETTY_FUNCTION__);
     return ADDON_STATUS_PERMANENT_FAILURE;
+  }
 
   KODI_HANDLE addonInstance;
   status = m_interface.toAddon->create_instance(instanceType, instanceID.c_str(), instance, &addonInstance, parentInstance);
