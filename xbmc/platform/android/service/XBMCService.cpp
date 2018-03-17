@@ -99,6 +99,7 @@ void CXBMCService::SetupEnv()
   std::string className = CCompileInfo::GetPackage();
 
   std::string cacheDir = getCacheDir().getAbsolutePath();
+  setenv("KODI_CACHE", cacheDir.c_str(), 0);
   setenv("KODI_BINADDON_PATH", (cacheDir + "/lib").c_str(), 0);
   
   std::string xbmcHome = CJNISystem::getProperty("xbmc.home", "");

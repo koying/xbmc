@@ -124,6 +124,14 @@ void CAndroidStorageProvider::GetLocalDrives(VECSOURCES &localDrives)
   share.strPath = "/";
   share.strName = g_localizeStrings.Get(21453);
   localDrives.push_back(share);
+
+  // home directory
+  if (getenv("KODI_CACHE"))
+  {
+    share.strPath = getenv("KODI_CACHE");
+    share.strName = "Cache";
+    localDrives.push_back(share);
+  }
 }
 
 void CAndroidStorageProvider::GetRemovableDrives(VECSOURCES &removableDrives)
