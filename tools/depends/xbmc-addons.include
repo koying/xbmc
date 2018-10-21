@@ -20,17 +20,18 @@ ifeq ($(CMAKE),)
 endif
 
 CMAKE_EXTRA =
-ifeq (darwin, $(findstring darwin, $(HOST)))
-    INSTALL_PREFIX = ../../../../../addons/
-    CMAKE_EXTRA = -DPACKAGE_ZIP=ON
+ifneq ($(PREFIX),)
+  INSTALL_PREFIX = $(PREFIX) -DOVERRIDE_PATHS=ON
+  CMAKE_EXTRA += -DAUTOCONF_FILES="$(CONFIG_SUB) $(CONFIG_GUESS)"
 endif
 
-ifneq ($(PREFIX),)
-  ifneq (darwin, $(findstring darwin, $(HOST)))
-    INSTALL_PREFIX = $(PREFIX) -DOVERRIDE_PATHS=ON
-  endif
-
-  CMAKE_EXTRA += -DAUTOCONF_FILES="$(CONFIG_SUB) $(CONFIG_GUESS)"
+ifeq (darwin, $(findstring darwin, $(HOST)))
+    INSTALL_PREFIX = ../../../../../addons/
+    CMAKE_EXTRA += -DPACKAGE_ZIP=ON
+endif
+ifeq (android, $(findstring android, $(HOST)))
+    INSTALL_PREFIX = ../../../../../addons/
+    CMAKE_EXTRA += -DPACKAGE_ZIP=ON
 endif
 
 ifneq ($(TARBALLS_LOCATION),)
